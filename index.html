@@ -47,6 +47,24 @@
             flex-direction: column;
             align-items: center;
         }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 30px;
+        }
+        .spinner {
+            margin: 15px auto;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #007BFF;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -71,7 +89,6 @@
             <option value="sei-usdt">SEI/USDT</option>
             <option value="apt-usdt">APT/USDT</option>
             <option value="masa-usdt">Masa/USDT</option>
-            <!-- Adding top 20 cryptos -->
             <option value="bitcoin-usdt">BTC/USDT</option>
             <option value="ethereum-usdt">ETH/USDT</option>
             <option value="ripple-usdt">XRP/USDT</option>
@@ -96,6 +113,11 @@
 
         <button onclick="generateChart()">Generate Chart & Analysis</button>
 
+        <div class="loading" id="loadingSpinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading data, please wait...</p>
+        </div>
+
         <div id="tradingview-chart"></div>
 
         <div class="output" id="analysisResult">
@@ -104,7 +126,6 @@
     </div>
 
     <script>
-        // Fetch live data from CoinGecko API
         async function fetchLiveData(crypto) {
             const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=7`;
             const response = await fetch(url);
@@ -112,18 +133,28 @@
             return data;
         }
 
-        // Generate TradingView chart and display analysis
         function generateChart() {
             const crypto = document.getElementById("cryptoDropdown").value;
             const symbol = crypto.replace("-", "").toUpperCase();
 
+            // Show the loading spinner
+            document.getElementById("loadingSpinner").style.display = "block";
+            document.getElementById("tradingview-chart").style.display = "none";
+            document.getElementById("analysisResult").style.display = "none";
+
             fetchLiveData(crypto).then(data => {
-                calculateIndicators(data.prices);  // Calculate EMA, RSI, Support/Resistance
-                loadTradingViewChart(symbol);  // Load TradingView chart with indicators
+                calculateIndicators(data.prices);
+                loadTradingViewChart(symbol);
+                document.getElementById("loadingSpinner").style.display = "none";
+                document.getElementById("tradingview-chart").style.display = "block";
+                document.getElementById("analysisResult").style.display = "block";
+            }).catch(error => {
+                console.error('Error fetching data:', error);
+                document.getElementById("loadingSpinner").style.display = "none";
+                alert("There was an error fetching the data. Please try again.");
             });
         }
 
-        // Function to load TradingView chart with selected indicators
         function loadTradingViewChart(symbol) {
             new TradingView.widget({
                 container_id: "tradingview-chart",
@@ -149,7 +180,6 @@
             });
         }
 
-        // Function to calculate EMA, RSI, Support, and Resistance levels
         function calculateIndicators(prices) {
             const ema20 = calculateEMA(prices, 20);
             const rsi14 = calculateRSI(prices, 14);
@@ -158,7 +188,6 @@
             displayAnalysis(ema20, rsi14, supportRes);
         }
 
-        // EMA Calculation function
         function calculateEMA(prices, period) {
             let k = 2 / (period + 1);
             let ema = prices.slice(0, period).reduce((a, b) => a + b[1], 0) / period;
@@ -168,7 +197,6 @@
             return ema.toFixed(2);
         }
 
-        // RSI Calculation function
         function calculateRSI(prices, period) {
             let gains = 0, losses = 0;
             for (let i = 1; i <= period; i++) {
@@ -186,14 +214,12 @@
             return rsi.toFixed(2);
         }
 
-        // Support and Resistance Levels Calculation
         function calculateSupportResistance(prices) {
             let support = Math.min(...prices.map(item => item[1]));  // Minimum price as support
             let resistance = Math.max(...prices.map(item => item[1]));  // Maximum price as resistance
             return { support, resistance };
         }
 
-        // Display the analysis (EMA, RSI, Support/Resistance levels)
         function displayAnalysis(ema20, rsi14, supportRes) {
             const resultText = `
                 <strong>Analysis Results:</strong><br>
