@@ -88,7 +88,15 @@
             <option value="ethereum">ETH</option>
             <option value="ripple">XRP</option>
             <option value="cardano">ADA</option>
-            <!-- Add more cryptos if necessary -->
+        </select>
+
+        <p>Select a timeframe:</p>
+        <select id="timeframeDropdown">
+            <option value="1">1 Hour</option>
+            <option value="4">4 Hours</option>
+            <option value="12">12 Hours</option>
+            <option value="24">1 Day</option>
+            <option value="720">1 Month</option>
         </select>
 
         <button onclick="generateAnalysis()">Generate Analysis</button>
@@ -102,8 +110,8 @@
     </div>
 
     <script>
-        async function fetchLiveData(crypto) {
-            const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=30`;
+        async function fetchLiveData(crypto, days) {
+            const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=${days}`;
             console.log("Fetching data from:", url); // Debug log for the URL
             const response = await fetch(url);
             const data = await response.json();
@@ -113,12 +121,14 @@
 
         function generateAnalysis() {
             const crypto = document.getElementById("cryptoDropdown").value;
+            const timeframe = document.getElementById("timeframeDropdown").value;
+            const days = timeframe === "1" ? 1 / 24 : timeframe === "4" ? 1 / 6 : timeframe === "12" ? 0.5 : timeframe === "24" ? 1 : 30;
 
             // Show loading spinner
             document.getElementById("loadingSpinner").style.display = "block";
             document.getElementById("analysisResult").style.display = "none";
 
-            fetchLiveData(crypto).then(data => {
+            fetchLiveData(crypto, days).then(data => {
                 if (!data || !data.prices) {
                     alert("Error fetching valid data. Please try again.");
                     return;
@@ -130,7 +140,9 @@
                 const rsi14 = calculateRSI(prices, 14);
                 const macd = calculateMACD(prices);
 
-                displayAnalysis(ema20, rsi14, macd, supportRes);
+                const buySignal = getBuySignal(rsi14, macd, ema20, prices);
+
+                displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal);
                 document.getElementById("loadingSpinner").style.display = "none";
                 document.getElementById("analysisResult").style.display = "block";
             }).catch(error => {
@@ -179,15 +191,36 @@
             return { support, resistance };
         }
 
-        function displayAnalysis(ema20, rsi14, macd, supportRes) {
+        function getBuySignal(rsi14, macd, ema20, prices) {
+            const price = prices[prices.length - 1][1];  // Latest price
+
+            // Buy signal criteria
+            const isRsiValid = rsi14 < 70;   // RSI less than 70 indicates not overbought
+            const isMacdValid = macd > 0;    // MACD above zero indicates uptrend
+            const isEmaValid = price > ema20; // Price above EMA20 indicates uptrend
+            const isNearSupport = price > supportRes.support; // Price above support level
+
+            // If all criteria are met, it's a buy signal
+            if (isRsiValid && isMacdValid && isEmaValid && isNearSupport) {
+                return "Buy Signal: Strong buy opportunity!";
+            } else {
+                return "No Buy Signal: Conditions not favorable for buying.";
+            }
+        }
+
+        function displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal) {
+            const timeframeText = timeframe === "1" ? "1 Hour" :
+                                  timeframe === "4" ? "4 Hours" :
+                                  timeframe === "12" ? "12 Hours" :
+                                  timeframe === "24" ? "1 Day" : "1 Month";
             const resultText = `
-                <strong>Analysis Results:</strong><br>
+                <strong>Analysis Results for ${timeframeText}:</strong><br>
                 <strong>EMA 20:</strong> ${ema20}<br>
                 <strong>RSI 14:</strong> ${rsi14}<br>
                 <strong>MACD:</strong> ${macd}<br>
                 <strong>Support Level:</strong> ${supportRes.support}<br>
                 <strong>Resistance Level:</strong> ${supportRes.resistance}<br>
-                <strong>Buying Zone:</strong> ${rsi14 < 70 && macd > 0 ? 'YES' : 'NO'}<br>
+                <strong>${buySignal}</strong><br>
                 <strong>Trade Setup:</strong><br>
                 Entry Level: ${supportRes.resistance}<br>
                 Stop Loss: ${supportRes.support}
