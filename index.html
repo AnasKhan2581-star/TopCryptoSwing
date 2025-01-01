@@ -78,16 +78,16 @@
         <p>Select a cryptocurrency:</p>
 
         <select id="cryptoDropdown">
-            <option value="arb-usdt">ARB/USDT</option>
-            <option value="algo-usdt">ALGO/USDT</option>
-            <option value="ftm-usdt">FTM/USDT</option>
-            <option value="sei-usdt">SEI/USDT</option>
-            <option value="apt-usdt">APT/USDT</option>
-            <option value="masa-usdt">Masa/USDT</option>
-            <option value="bitcoin-usdt">BTC/USDT</option>
-            <option value="ethereum-usdt">ETH/USDT</option>
-            <option value="ripple-usdt">XRP/USDT</option>
-            <option value="cardano-usdt">ADA/USDT</option>
+            <option value="arbitrum">ARB</option>
+            <option value="algorand">ALGO</option>
+            <option value="fantom">FTM</option>
+            <option value="secrets">SEI</option>
+            <option value="aptos">APT</option>
+            <option value="masa">MASA</option>
+            <option value="bitcoin">BTC</option>
+            <option value="ethereum">ETH</option>
+            <option value="ripple">XRP</option>
+            <option value="cardano">ADA</option>
             <!-- Add more cryptos if necessary -->
         </select>
 
@@ -104,8 +104,10 @@
     <script>
         async function fetchLiveData(crypto) {
             const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=30`;
+            console.log("Fetching data from:", url); // Debug log for the URL
             const response = await fetch(url);
             const data = await response.json();
+            console.log("API Response:", data); // Debug log for the API response
             return data;
         }
 
@@ -117,6 +119,11 @@
             document.getElementById("analysisResult").style.display = "none";
 
             fetchLiveData(crypto).then(data => {
+                if (!data || !data.prices) {
+                    alert("Error fetching valid data. Please try again.");
+                    return;
+                }
+
                 const prices = data.prices;
                 const supportRes = calculateSupportResistance(prices);
                 const ema20 = calculateEMA(prices, 20);
