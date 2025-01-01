@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Live Analysis & TradingView Chart</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            font-size: 24px;
+            text-align: center;
+        }
+        select, button {
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #tradingview-chart {
+            width: 100%;
+            height: 500px;
+            margin-top: 30px;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            select, button {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Live Crypto Analysis & TradingView Chart</h1>
+        <p>Select a cryptocurrency:</p>
+
+        <select id="cryptoDropdown">
+            <option value="arb-usdt">ARB/USDT</option>
+            <option value="algo-usdt">ALGO/USDT</option>
+            <option value="ftm-usdt">FTM/USDT</option>
+            <option value="sei-usdt">SEI/USDT</option>
+            <option value="apt-usdt">APT/USDT</option>
+            <option value="masa-usdt">Masa/USDT</option>
+            <!-- Adding top 20 cryptos -->
+            <option value="bitcoin-usdt">BTC/USDT</option>
+            <option value="ethereum-usdt">ETH/USDT</option>
+            <option value="ripple-usdt">XRP/USDT</option>
+            <option value="cardano-usdt">ADA/USDT</option>
+            <option value="dogecoin-usdt">DOGE/USDT</option>
+            <option value="polkadot-usdt">DOT/USDT</option>
+            <option value="binancecoin-usdt">BNB/USDT</option>
+            <option value="solana-usdt">SOL/USDT</option>
+            <option value="chainlink-usdt">LINK/USDT</option>
+            <option value="litecoin-usdt">LTC/USDT</option>
+            <option value="uniswap-usdt">UNI/USDT</option>
+            <option value="avalanche-usdt">AVAX/USDT</option>
+            <option value="polygon-usdt">MATIC/USDT</option>
+            <option value="shiba-inu-usdt">SHIB/USDT</option>
+            <option value="tron-usdt">TRX/USDT</option>
+            <option value="kusama-usdt">KSM/USDT</option>
+            <option value="monero-usdt">XMR/USDT</option>
+            <option value="stellar-usdt">XLM/USDT</option>
+            <option value="vechain-usdt">VET/USDT</option>
+            <option value="filecoin-usdt">FIL/USDT</option>
+        </select>
+
+        <button onclick="generateChart()">Generate Chart & Analysis</button>
+
+        <div id="tradingview-chart"></div>
+
+        <div class="output" id="analysisResult">
+            <!-- Analysis results will be shown here -->
+        </div>
+    </div>
+
+    <script>
+        // Fetch live data from CoinGecko API
+        async function fetchLiveData(crypto) {
+            const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=7`;
+            const response = await fetch(url);
+            const data = await response.json();
+            return data;
+        }
+
+        // Generate TradingView chart and display analysis
+        function generateChart() {
+            const crypto = document.getElementById("cryptoDropdown").value;
+            const symbol = crypto.replace("-", "").toUpperCase();
+
+            fetchLiveData(crypto).then(data => {
+                calculateIndicators(data.prices);  // Calculate EMA, RSI, Support/Resistance
+                loadTradingViewChart(symbol);  // Load TradingView chart with indicators
+            });
+        }
+
+        // Function to load TradingView chart with selected indicators
+        function loadTradingViewChart(symbol) {
+            new TradingView.widget({
+                container_id: "tradingview-chart",
+                autosize: true,
+                symbol: `BINANCE:${symbol}`,
+                interval: "60",
+                timezone: "Etc/UTC",
+                theme: "light",
+                style: "1",
+                locale: "en",
+                toolbar_bg: "#f1f3f6",
+                enable_publishing: false,
+                hide_top_toolbar: true,
+                hide_legend: true,
+                studies: [
+                    "RSI",
+                    "EMA",
+                    "MACD",
+                    "SupportResistance"
+                ],
+                withdateranges: true,
+                largeChartUrl: "",
+            });
+        }
+
+        // Function to calculate EMA, RSI, Support, and Resistance levels
+        function calculateIndicators(prices) {
+            const ema20 = calculateEMA(prices, 20);
+            const rsi14 = calculateRSI(prices, 14);
+            const supportRes = calculateSupportResistance(prices);
+
+            displayAnalysis(ema20, rsi14, supportRes);
+        }
+
+        // EMA Calculation function
+        function calculateEMA(prices, period) {
+            let k = 2 / (period + 1);
+            let ema = prices.slice(0, period).reduce((a, b) => a + b[1], 0) / period;
+            for (let i = period; i < prices.length; i++) {
+                ema = (prices[i][1] * k) + (ema * (1 - k));
+            }
+            return ema.toFixed(2);
+        }
+
+        // RSI Calculation function
+        function calculateRSI(prices, period) {
+            let gains = 0, losses = 0;
+            for (let i = 1; i <= period; i++) {
+                let change = prices[i][1] - prices[i - 1][1];
+                if (change > 0) {
+                    gains += change;
+                } else {
+                    losses -= change;
+                }
+            }
+            let avgGain = gains / period;
+            let avgLoss = losses / period;
+            let rs = avgGain / avgLoss;
+            let rsi = 100 - (100 / (1 + rs));
+            return rsi.toFixed(2);
+        }
+
+        // Support and Resistance Levels Calculation
+        function calculateSupportResistance(prices) {
+            let support = Math.min(...prices.map(item => item[1]));  // Minimum price as support
+            let resistance = Math.max(...prices.map(item => item[1]));  // Maximum price as resistance
+            return { support, resistance };
+        }
+
+        // Display the analysis (EMA, RSI, Support/Resistance levels)
+        function displayAnalysis(ema20, rsi14, supportRes) {
+            const resultText = `
+                <strong>Analysis Results:</strong><br>
+                <strong>EMA 20:</strong> ${ema20}<br>
+                <strong>RSI 14:</strong> ${rsi14}<br>
+                <strong>Support Level:</strong> ${supportRes.support}<br>
+                <strong>Resistance Level:</strong> ${supportRes.resistance}<br>
+                <strong>Buying Zone:</strong> ${rsi14 < 70 ? 'YES' : 'NO'}<br>
+            `;
+            document.getElementById("analysisResult").innerHTML = resultText;
+        }
+    </script>
+
+    <!-- TradingView Chart Widget -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+</body>
+</html>
