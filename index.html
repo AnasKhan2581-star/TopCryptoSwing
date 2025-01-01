@@ -149,7 +149,8 @@
                 const rsi14 = calculateRSI(prices, 14);
                 const macd = calculateMACD(prices);
 
-                const buySignal = getBuySignal(rsi14, macd, ema20, prices);
+                // Pass supportRes to getBuySignal
+                const buySignal = getBuySignal(rsi14, macd, ema20, prices, supportRes);
 
                 displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal);
                 document.getElementById("loadingSpinner").style.display = "none";
@@ -200,7 +201,8 @@
             return { support, resistance };
         }
 
-        function getBuySignal(rsi14, macd, ema20, prices) {
+        // Update getBuySignal to receive supportRes as an argument
+        function getBuySignal(rsi14, macd, ema20, prices, supportRes) {
             const price = prices[prices.length - 1][1];  // Latest price
 
             // Buy signal criteria
