@@ -5,70 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crypto Long Position Analysis</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }
-        h1 {
-            font-size: 24px;
-            text-align: center;
-        }
-        select, button {
-            padding: 10px;
-            font-size: 16px;
-            margin-top: 15px;
-            width: 100%;
-            max-width: 300px;
-            margin-bottom: 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .output {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .loading {
-            text-align: center;
-            font-size: 18px;
-            margin-top: 30px;
-        }
-        .spinner {
-            margin: 15px auto;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top: 4px solid #007BFF;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @media (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            select, button {
-                width: 100%;
-                max-width: 100%;
-            }
-        }
+        /* Add styles for button, chart, and layout */
     </style>
 </head>
 <body>
@@ -81,13 +18,9 @@
             <option value="arbitrum">ARB</option>
             <option value="algorand">ALGO</option>
             <option value="fantom">FTM</option>
-            <option value="sei">SEI</option> <!-- Correct identifier -->
+            <option value="sei">SEI</option>
             <option value="aptos">APT</option>
-            <option value="masa-finance">MASA</option> <!-- Correct identifier -->
-            <option value="bitcoin">BTC</option>
-            <option value="ethereum">ETH</option>
-            <option value="ripple">XRP</option>
-            <option value="cardano">ADA</option>
+            <option value="masa-finance">MASA</option>
         </select>
 
         <p>Select a timeframe:</p>
@@ -108,34 +41,31 @@
 
         <div id="analysisResult" class="output" style="display: none;"></div>
 
-        <!-- Rules Dropdown -->
-        <div>
-            <p>View Trade Rules:</p>
-            <select id="rulesDropdown">
-                <option value="rules">Buy Signal Rules</option>
-            </select>
-            <div id="rulesOutput" class="output" style="display: none; padding-top: 10px;">
-                <ul>
-                    <li>RSI is below 70, indicating it's not overbought.</li>
-                    <li>MACD is above 0, signaling an uptrend.</li>
-                    <li>Price is above the EMA 20, showing the current trend is upward.</li>
-                    <li>Price is above support, indicating the market is bullish.</li>
-                </ul>
-            </div>
+        <!-- Reveal Rules Button -->
+        <div id="rulesButton">Reveal Rules</div>
+
+        <!-- Rules Output -->
+        <div id="rulesOutput">
+            <ul>
+                <li><strong>RSI below 70</strong>: Indicates that the asset is not overbought, ideal for a long position.</li>
+                <li><strong>MACD above 0</strong>: Shows that the trend is in an uptrend, further confirming the buy signal.</li>
+                <li><strong>Price above 20 EMA</strong>: Indicates that the price is currently in an uptrend, following the short-term trend.</li>
+                <li><strong>Price above support level</strong>: Signals that the price is trading above a key support level, a good indicator for bullish sentiment.</li>
+                <li><strong>Resistance level</strong>: Price should be approaching or near resistance for a potential breakout above it.</li>
+            </ul>
         </div>
     </div>
 
     <script>
-        async function fetchLiveData(crypto, days) {
-            const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=${days}&interval=daily`;
-            console.log("Fetching data from:", url); // Debug log for the URL
+        async function fetchCandleData(crypto, interval, days) {
+            const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
+            console.log("Fetching candle data from:", url); // Debug log for the URL
             try {
                 const response = await fetch(url);
                 const data = await response.json();
                 if (!data || !data.prices || !Array.isArray(data.prices)) {
                     throw new Error("Invalid data format received.");
                 }
-                console.log("API Response:", data); // Debug log for the API response
                 return data;
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -143,122 +73,113 @@
             }
         }
 
-        function generateAnalysis() {
+        function calculateSupportResistance(candles) {
+            let support = Math.min(...candles.map(candle => candle[1])); // Low
+            let resistance = Math.max(...candles.map(candle => candle[2])); // High
+            return { support, resistance };
+        }
+
+        function calculateEMA(candles, period = 20) {
+            const closes = candles.map(candle => candle[4]); // Closing prices
+            let ema = [];
+            let k = 2 / (period + 1);
+            ema.push(closes[0]); // First EMA is just the first close price
+            for (let i = 1; i < closes.length; i++) {
+                ema.push((closes[i] - ema[i - 1]) * k + ema[i - 1]);
+            }
+            return ema[ema.length - 1]; // Latest EMA
+        }
+
+        function calculateRSI(candles, period = 14) {
+            const closes = candles.map(candle => candle[4]); // Closing prices
+            let gains = 0, losses = 0;
+            for (let i = 1; i <= period; i++) {
+                const change = closes[i] - closes[i - 1];
+                if (change > 0) gains += change;
+                else losses -= change;
+            }
+            let avgGain = gains / period, avgLoss = losses / period;
+            const rs = avgGain / avgLoss;
+            return 100 - (100 / (1 + rs));
+        }
+
+        function calculateMACD(candles) {
+            const closes = candles.map(candle => candle[4]); // Closing prices
+            let ema12 = calculateEMA(candles, 12);
+            let ema26 = calculateEMA(candles, 26);
+            return ema12 - ema26; // MACD line
+        }
+
+        function displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal) {
+            let verdict = buySignal ? "Buy" : "Do Not Buy";
+            const analysis = `
+                <h3>Analysis for ${timeframe}-hour Timeframe</h3>
+                <p><strong>RSI:</strong> ${rsi14.toFixed(2)}</p>
+                <p><strong>EMA (20):</strong> ${ema20.toFixed(2)}</p>
+                <p><strong>MACD:</strong> ${macd.toFixed(2)}</p>
+                <p><strong>Support Level:</strong> ${supportRes.support.toFixed(3)}</p>
+                <p><strong>Resistance Level:</strong> ${supportRes.resistance.toFixed(3)}</p>
+                <p><strong>Verdict:</strong> ${verdict}</p>
+            `;
+            document.getElementById("analysisResult").innerHTML = analysis;
+        }
+
+        async function generateAnalysis() {
             const crypto = document.getElementById("cryptoDropdown").value;
             const timeframe = document.getElementById("timeframeDropdown").value;
-            const days = timeframe === "1" ? 1 / 24 : timeframe === "4" ? 1 / 6 : timeframe === "12" ? 0.5 : timeframe === "24" ? 1 : 30;
+
+            let days = 1; // Default for 1 hour
+            let interval = 'minute';
+
+            // Adjust days and interval based on selected timeframe
+            if (timeframe === "1") {
+                days = 1 / 24;
+                interval = 'minute';
+            } else if (timeframe === "4") {
+                days = 4 / 24;
+                interval = 'minute';
+            } else if (timeframe === "12") {
+                days = 12 / 24;
+                interval = 'minute';
+            } else if (timeframe === "24") {
+                days = 1;
+                interval = 'hour';
+            } else if (timeframe === "720") {
+                days = 30; // For 1 month
+                interval = 'day';
+            }
 
             // Show loading spinner
             document.getElementById("loadingSpinner").style.display = "block";
             document.getElementById("analysisResult").style.display = "none";
 
-            fetchLiveData(crypto, days).then(data => {
-                if (!data || !data.prices || !Array.isArray(data.prices)) {
-                    alert("Error fetching valid data. Please try again.");
-                    document.getElementById("loadingSpinner").style.display = "none";
-                    return;
-                }
+            const data = await fetchCandleData(crypto, interval, days);
 
-                const prices = data.prices;
-                const supportRes = calculateSupportResistance(prices);
-                const ema20 = calculateEMA(prices, 20);
-                const rsi14 = calculateRSI(prices, 14);
-                const macd = calculateMACD(prices);
-
-                // Pass supportRes to getBuySignal
-                const buySignal = getBuySignal(rsi14, macd, ema20, prices, supportRes);
-
-                displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal);
+            if (!data || !data.prices) {
+                alert("Error fetching valid data. Please try again.");
                 document.getElementById("loadingSpinner").style.display = "none";
-                document.getElementById("analysisResult").style.display = "block";
-            }).catch(error => {
-                console.error('Error fetching data:', error);
-                document.getElementById("loadingSpinner").style.display = "none";
-                alert("There was an error fetching the data. Please try again.");
-            });
-        }
-
-        function calculateEMA(prices, period) {
-            let k = 2 / (period + 1);
-            let ema = prices.slice(0, period).reduce((a, b) => a + (b[1] || 0), 0) / period;
-            for (let i = period; i < prices.length; i++) {
-                ema = (prices[i][1] * k) + (ema * (1 - k));
+                return;
             }
-            return ema.toFixed(3); // Fixed to 3 decimal places
+
+            const candles = data.prices;
+            const supportRes = calculateSupportResistance(candles);
+            const ema20 = calculateEMA(candles);
+            const rsi14 = calculateRSI(candles);
+            const macd = calculateMACD(candles);
+
+            const buySignal = (rsi14 < 70) && (macd > 0) && (candles[candles.length - 1][4] > ema20) && (candles[candles.length - 1][4] > supportRes.support);
+
+            displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal);
+
+            document.getElementById("loadingSpinner").style.display = "none";
+            document.getElementById("analysisResult").style.display = "block";
         }
 
-        function calculateRSI(prices, period) {
-            let gains = 0, losses = 0;
-            for (let i = 1; i <= period; i++) {
-                const change = (prices[i] && prices[i][1]) - (prices[i - 1] && prices[i - 1][1]);
-                if (change > 0) {
-                    gains += change;
-                } else {
-                    losses -= change;
-                }
-            }
-            let avgGain = gains / period;
-            let avgLoss = losses / period;
-            let rs = avgGain / avgLoss;
-            let rsi = 100 - (100 / (1 + rs));
-            return rsi.toFixed(3); // Fixed to 3 decimal places
-        }
-
-        function calculateMACD(prices) {
-            const ema12 = calculateEMA(prices, 12);
-            const ema26 = calculateEMA(prices, 26);
-            const macd = (parseFloat(ema12) - parseFloat(ema26)).toFixed(3); // Fixed to 3 decimal places
-            return macd;
-        }
-
-        function calculateSupportResistance(prices) {
-            let support = Math.min(...prices.map(item => item[1] || 0));  // Minimum price as support
-            let resistance = Math.max(...prices.map(item => item[1] || 0));  // Maximum price as resistance
-            return { support: support.toFixed(3), resistance: resistance.toFixed(3) }; // Fixed to 3 decimal places
-        }
-
-        function getBuySignal(rsi14, macd, ema20, prices, supportRes) {
-            const price = prices[prices.length - 1][1];  // Latest price
-
-            // Buy signal criteria
-            const isRsiValid = rsi14 < 70;   // RSI less than 70 indicates not overbought
-            const isMacdValid = macd > 0;    // MACD above zero indicates uptrend
-            const isEmaValid = price > ema20; // Price above EMA20 indicates uptrend
-            const isNearSupport = price > supportRes.support; // Price above support level
-
-            // Entry and Target calculation
-            const entryLevel = price.toFixed(3);
-            const stopLoss = (price - (price * 0.02)).toFixed(3);  // Example: Stop loss 2% below entry
-            const priceTarget = (price + (price * 0.05)).toFixed(3); // Example: Target 5% above entry
-
-            const signal = (isRsiValid && isMacdValid && isEmaValid && isNearSupport) ? "BUY" : "NO BUY";
-
-            return { signal, entryLevel, stopLoss, priceTarget };
-        }
-
-        function displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal) {
-            const resultText = `
-                <strong>Timeframe:</strong> ${timeframe} Hours<br>
-                <strong>RSI (14):</strong> ${rsi14}<br>
-                <strong>MACD:</strong> ${macd}<br>
-                <strong>Support Level:</strong> ${supportRes.support}<br>
-                <strong>Resistance Level:</strong> ${supportRes.resistance}<br><br>
-                <strong>Signal:</strong> ${buySignal.signal}<br>
-                ${buySignal.entryLevel ? `<strong>Entry Level:</strong> ${buySignal.entryLevel}<br>` : ''}
-                ${buySignal.priceTarget ? `<strong>Price Target:</strong> ${buySignal.priceTarget}<br>` : ''}
-                ${buySignal.stopLoss ? `<strong>Stop Loss:</strong> ${buySignal.stopLoss}<br>` : ''}
-            `;
-            document.getElementById("analysisResult").innerHTML = resultText;
-        }
-
-        // Show rules when selected from the dropdown
-        document.getElementById('rulesDropdown').addEventListener('change', function() {
-            if (this.value === 'rules') {
-                document.getElementById('rulesOutput').style.display = 'block';
-            } else {
-                document.getElementById('rulesOutput').style.display = 'none';
-            }
-        });
+        document.getElementById("rulesButton").onclick = function() {
+            const rulesOutput = document.getElementById("rulesOutput");
+            rulesOutput.style.display = rulesOutput.style.display === "none" ? "block" : "none";
+        };
     </script>
+
 </body>
 </html>
