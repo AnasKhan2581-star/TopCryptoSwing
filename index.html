@@ -116,7 +116,7 @@
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                if (!data || !data.prices) {
+                if (!data || !data.prices || !Array.isArray(data.prices)) {
                     throw new Error("Invalid data format received.");
                 }
                 console.log("API Response:", data); // Debug log for the API response
@@ -137,8 +137,9 @@
             document.getElementById("analysisResult").style.display = "none";
 
             fetchLiveData(crypto, days).then(data => {
-                if (!data || !data.prices) {
+                if (!data || !data.prices || !Array.isArray(data.prices)) {
                     alert("Error fetching valid data. Please try again.");
+                    document.getElementById("loadingSpinner").style.display = "none";
                     return;
                 }
 
@@ -162,7 +163,7 @@
 
         function calculateEMA(prices, period) {
             let k = 2 / (period + 1);
-            let ema = prices.slice(0, period).reduce((a, b) => a + b[1], 0) / period;
+            let ema = prices.slice(0, period).reduce((a, b) => a + (b[1] || 0), 0) / period;
             for (let i = period; i < prices.length; i++) {
                 ema = (prices[i][1] * k) + (ema * (1 - k));
             }
@@ -172,7 +173,7 @@
         function calculateRSI(prices, period) {
             let gains = 0, losses = 0;
             for (let i = 1; i <= period; i++) {
-                let change = prices[i][1] - prices[i - 1][1];
+                const change = (prices[i] && prices[i][1]) - (prices[i - 1] && prices[i - 1][1]);
                 if (change > 0) {
                     gains += change;
                 } else {
@@ -194,8 +195,8 @@
         }
 
         function calculateSupportResistance(prices) {
-            let support = Math.min(...prices.map(item => item[1]));  // Minimum price as support
-            let resistance = Math.max(...prices.map(item => item[1]));  // Maximum price as resistance
+            let support = Math.min(...prices.map(item => item[1] || 0));  // Minimum price as support
+            let resistance = Math.max(...prices.map(item => item[1] || 0));  // Maximum price as resistance
             return { support, resistance };
         }
 
