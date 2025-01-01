@@ -107,6 +107,22 @@
         </div>
 
         <div id="analysisResult" class="output" style="display: none;"></div>
+
+        <!-- Rules Dropdown -->
+        <div>
+            <p>View Trade Rules:</p>
+            <select id="rulesDropdown">
+                <option value="rules">Buy Signal Rules</option>
+            </select>
+            <div id="rulesOutput" class="output" style="display: none; padding-top: 10px;">
+                <ul>
+                    <li>RSI is below 70, indicating it's not overbought.</li>
+                    <li>MACD is above 0, signaling an uptrend.</li>
+                    <li>Price is above the EMA 20, showing the current trend is upward.</li>
+                    <li>Price is above support, indicating the market is bullish.</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -168,7 +184,7 @@
             for (let i = period; i < prices.length; i++) {
                 ema = (prices[i][1] * k) + (ema * (1 - k));
             }
-            return ema.toFixed(2);
+            return ema.toFixed(3); // Fixed to 3 decimal places
         }
 
         function calculateRSI(prices, period) {
@@ -185,23 +201,22 @@
             let avgLoss = losses / period;
             let rs = avgGain / avgLoss;
             let rsi = 100 - (100 / (1 + rs));
-            return rsi.toFixed(2);
+            return rsi.toFixed(3); // Fixed to 3 decimal places
         }
 
         function calculateMACD(prices) {
             const ema12 = calculateEMA(prices, 12);
             const ema26 = calculateEMA(prices, 26);
-            const macd = (parseFloat(ema12) - parseFloat(ema26)).toFixed(2);
+            const macd = (parseFloat(ema12) - parseFloat(ema26)).toFixed(3); // Fixed to 3 decimal places
             return macd;
         }
 
         function calculateSupportResistance(prices) {
             let support = Math.min(...prices.map(item => item[1] || 0));  // Minimum price as support
             let resistance = Math.max(...prices.map(item => item[1] || 0));  // Maximum price as resistance
-            return { support, resistance };
+            return { support: support.toFixed(3), resistance: resistance.toFixed(3) }; // Fixed to 3 decimal places
         }
 
-        // Update getBuySignal to receive supportRes as an argument
         function getBuySignal(rsi14, macd, ema20, prices, supportRes) {
             const price = prices[prices.length - 1][1];  // Latest price
 
@@ -211,33 +226,39 @@
             const isEmaValid = price > ema20; // Price above EMA20 indicates uptrend
             const isNearSupport = price > supportRes.support; // Price above support level
 
-            // If all criteria are met, it's a buy signal
-            if (isRsiValid && isMacdValid && isEmaValid && isNearSupport) {
-                return "Buy Signal: Strong buy opportunity!";
-            } else {
-                return "No Buy Signal: Conditions not favorable for buying.";
-            }
+            // Entry and Target calculation
+            const entryLevel = price.toFixed(3);
+            const stopLoss = (price - (price * 0.02)).toFixed(3);  // Example: Stop loss 2% below entry
+            const priceTarget = (price + (price * 0.05)).toFixed(3); // Example: Target 5% above entry
+
+            const signal = (isRsiValid && isMacdValid && isEmaValid && isNearSupport) ? "BUY" : "NO BUY";
+
+            return { signal, entryLevel, stopLoss, priceTarget };
         }
 
         function displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal) {
-            const timeframeText = timeframe === "1" ? "1 Hour" :
-                                  timeframe === "4" ? "4 Hours" :
-                                  timeframe === "12" ? "12 Hours" :
-                                  timeframe === "24" ? "1 Day" : "1 Month";
             const resultText = `
-                <strong>Analysis Results for ${timeframeText}:</strong><br>
-                <strong>EMA 20:</strong> ${ema20}<br>
-                <strong>RSI 14:</strong> ${rsi14}<br>
+                <strong>Timeframe:</strong> ${timeframe} Hours<br>
+                <strong>RSI (14):</strong> ${rsi14}<br>
                 <strong>MACD:</strong> ${macd}<br>
                 <strong>Support Level:</strong> ${supportRes.support}<br>
-                <strong>Resistance Level:</strong> ${supportRes.resistance}<br>
-                <strong>${buySignal}</strong><br>
-                <strong>Trade Setup:</strong><br>
-                Entry Level: ${supportRes.resistance}<br>
-                Stop Loss: ${supportRes.support}
+                <strong>Resistance Level:</strong> ${supportRes.resistance}<br><br>
+                <strong>Signal:</strong> ${buySignal.signal}<br>
+                ${buySignal.entryLevel ? `<strong>Entry Level:</strong> ${buySignal.entryLevel}<br>` : ''}
+                ${buySignal.priceTarget ? `<strong>Price Target:</strong> ${buySignal.priceTarget}<br>` : ''}
+                ${buySignal.stopLoss ? `<strong>Stop Loss:</strong> ${buySignal.stopLoss}<br>` : ''}
             `;
             document.getElementById("analysisResult").innerHTML = resultText;
         }
+
+        // Show rules when selected from the dropdown
+        document.getElementById('rulesDropdown').addEventListener('change', function() {
+            if (this.value === 'rules') {
+                document.getElementById('rulesOutput').style.display = 'block';
+            } else {
+                document.getElementById('rulesOutput').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
