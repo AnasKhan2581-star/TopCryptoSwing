@@ -3,314 +3,277 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Long Position Analysis</title>
+    <title>Real-Time Crypto Swing Trading</title>
+    <script src="https://s3.tradingview.com/tv.js"></script> <!-- TradingView Widget -->
     <style>
-        /* General Body and Layout */
         body {
             font-family: Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: white;
             margin: 0;
             padding: 0;
+            background-color: #f4f4f4;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
-            height: 100vh;
+            justify-content: flex-start;
+        }
+        #container {
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
             box-sizing: border-box;
         }
-
-        .container {
-            width: 90%;
-            max-width: 700px;
-            background-color: #222;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        .select-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
         }
-
-        h1 {
-            font-size: 1.8em;
-            margin-bottom: 20px;
-            color: #fff;
+        #cryptoDropdown, #timeframeDropdown {
+            padding: 10px;
+            font-size: 14px;
+            margin-right: 10px;
+            width: 160px;
         }
-
-        select, button {
-            background-color: #333;
-            color: white;
-            padding: 12px;
-            margin: 10px 0;
-            width: 100%;
-            border: 1px solid #444;
-            border-radius: 5px;
-            font-size: 1.1em;
+        .addCryptoButton {
+            padding: 10px;
+            font-size: 14px;
             cursor: pointer;
-        }
-
-        button {
             background-color: #4CAF50;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .output {
-            margin-top: 20px;
-            padding: 20px;
-            background-color: #333;
-            border-radius: 8px;
-            display: none;
-        }
-
-        /* Loading Spinner */
-        .loading {
-            display: none;
-            margin-top: 20px;
-        }
-
-        .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Reveal Rules Dropdown */
-        #rulesButton {
-            background-color: #444;
             color: white;
-            padding: 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            width: 100%;
-            text-align: left;
+            border: none;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+        .chart-wrapper {
             margin-top: 20px;
-            font-size: 1.1em;
+            width: 100%;
+            height: 500px;
+            max-width: 1000px;
         }
-
-        #rulesButton:hover {
-            background-color: #555;
+        .button {
+            padding: 10px 20px;
+            font-size: 14px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
         }
-
-        #rulesOutput {
-            background-color: #333;
-            border-radius: 8px;
-            margin-top: 10px;
-            padding: 15px;
-            display: none;
+        .button:disabled {
+            background-color: #aaa;
         }
-
-        #rulesOutput ul {
-            list-style-type: none;
-            padding-left: 0;
+        #verdict {
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 1000px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
         }
-
-        #rulesOutput ul li {
-            margin-bottom: 10px;
+        a {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #4CAF50;
+            text-decoration: none;
+            font-weight: bold;
         }
-
-        /* Mobile-Friendly Adjustments */
-        @media (max-width: 600px) {
-            .container {
-                width: 100%;
-                padding: 10px;
+        @media screen and (max-width: 600px) {
+            #cryptoDropdown, #timeframeDropdown {
+                width: 120px;
             }
-
-            h1 {
-                font-size: 1.4em;
-            }
-
-            select, button {
-                width: 100%;
+            .button {
+                width: 80%;
             }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Live Crypto Long Position Analysis</h1>
-        <p>Select a cryptocurrency:</p>
-
+<div id="container">
+    <div class="select-container">
         <select id="cryptoDropdown">
-            <option value="arbitrum">ARB</option>
-            <option value="algorand">ALGO</option>
-            <option value="fantom">FTM</option>
-            <option value="sei">SEI</option>
-            <option value="aptos">APT</option>
-            <option value="masa-finance">MASA</option>
+            <option value="BTCUSDT">BTC/USDT</option>
+            <option value="ETHUSDT">ETH/USDT</option>
+            <option value="MASAUSDT">MASA/USDT</option>
+            <option value="FTMUSDT">FTM/USDT</option>
+            <option value="ARBUSDT">ARBU/USDT</option>
+            <option value="SEIUSDT">SEI/USDT</option>
         </select>
+        <button class="addCryptoButton" onclick="addCrypto()">+</button>
 
-        <p>Select a timeframe:</p>
         <select id="timeframeDropdown">
-            <option value="1">1 Hour</option>
-            <option value="4">4 Hours</option>
-            <option value="12">12 Hours</option>
-            <option value="24">1 Day</option>
-            <option value="720">1 Month</option>
+            <option value="1h">1 Hour</option>
+            <option value="4h">4 Hours</option>
+            <option value="12h">12 Hours</option>
+            <option value="1d">1 Day</option>
+            <option value="1w">1 Week</option>
         </select>
-
-        <button onclick="generateAnalysis()">Generate Analysis</button>
-
-        <div class="loading" id="loadingSpinner">
-            <div class="spinner"></div>
-            <p>Loading data, please wait...</p>
-        </div>
-
-        <div id="analysisResult" class="output"></div>
-
-        <!-- Reveal Rules Button -->
-        <div id="rulesButton" onclick="toggleRules()">Reveal Rules</div>
-
-        <!-- Rules Output -->
-        <div id="rulesOutput">
-            <ul>
-                <li><strong>RSI below 70:</strong> Indicates that the asset is not overbought, ideal for a long position.</li>
-                <li><strong>MACD above 0:</strong> Shows that the trend is in an uptrend, further confirming the buy signal.</li>
-                <li><strong>Price above 20 EMA:</strong> Indicates that the price is currently in an uptrend, following the short-term trend.</li>
-                <li><strong>Price above support level:</strong> Signals that the price is trading above a key support level, a good indicator for bullish sentiment.</li>
-                <li><strong>Resistance level:</strong> Price should be approaching or near resistance for a potential breakout above it.</li>
-            </ul>
-        </div>
     </div>
 
-    <script>
-        function toggleRules() {
-            const rulesOutput = document.getElementById("rulesOutput");
-            rulesOutput.style.display = rulesOutput.style.display === "none" ? "block" : "none";
+    <button class="button" onclick="fetchChart()">Fetch Chart</button>
+
+    <a id="tradingviewLink" href="#" target="_blank">Open in TradingView</a>
+
+    <div id="verdict"></div>
+
+    <div class="chart-wrapper" id="tv_chart"></div>
+</div>
+
+<script>
+// Fetch chart using TradingView widget
+function fetchChart() {
+    const cryptoDropdown = document.getElementById('cryptoDropdown');
+    const cryptoPair = cryptoDropdown.value;
+
+    const timeframeDropdown = document.getElementById('timeframeDropdown');
+    const timeframe = timeframeDropdown.value;
+
+    // Update TradingView link
+    const tradingviewLink = document.getElementById('tradingviewLink');
+    tradingviewLink.href = `https://www.tradingview.com/chart/?symbol=BINANCE:${cryptoPair}`;
+
+    // Clear existing chart
+    document.getElementById('tv_chart').innerHTML = "";
+
+    // Load TradingView widget
+    new TradingView.widget({
+        container_id: "tv_chart",
+        autosize: true,
+        symbol: `BINANCE:${cryptoPair}`,
+        interval: getTradingViewInterval(timeframe),
+        timezone: "Etc/UTC",
+        theme: "light",
+        style: "1",
+        locale: "en",
+        toolbar_bg: "#f1f3f6",
+        enable_publishing: false,
+        withdateranges: true,
+        hide_side_toolbar: false,
+        allow_symbol_change: true,
+        studies: [
+            "RSI@tv-basicstudies",
+            "MACD@tv-basicstudies",
+            "MAExp@tv-basicstudies" // Includes EMA
+        ],
+        details: true,
+        hotlist: true,
+        calendar: true,
+    });
+
+    generateVerdict(cryptoPair, timeframe);
+}
+
+// Map custom timeframes to TradingView intervals
+function getTradingViewInterval(timeframe) {
+    const intervalMap = {
+        "1h": "60",
+        "4h": "240",
+        "12h": "720",
+        "1d": "D",
+        "1w": "W",
+    };
+    return intervalMap[timeframe];
+}
+
+// Add a new cryptocurrency pair to the dropdown
+function addCrypto() {
+    const newCrypto = prompt("Enter the new cryptocurrency pair (e.g., BTCUSDT):").toUpperCase();
+    if (newCrypto) {
+        const cryptoDropdown = document.getElementById('cryptoDropdown');
+        const option = document.createElement('option');
+        option.value = newCrypto;
+        option.textContent = newCrypto;
+
+        // Check if the pair already exists
+        const options = Array.from(cryptoDropdown.options).map(opt => opt.value);
+        if (options.includes(newCrypto)) {
+            alert(`${newCrypto} already exists in the dropdown.`);
+        } else {
+            cryptoDropdown.appendChild(option);
+            alert(`${newCrypto} has been added.`);
         }
+    }
+}
 
-        async function fetchCandleData(crypto, interval, days) {
-            const url = `https://api.coingecko.com/api/v3/coins/${crypto}/market_chart?vs_currency=usd&days=${days}&interval=${interval}`;
-            console.log("Fetching candle data from:", url); // Log the URL for debugging
-            
-            try {
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                // Log the response data to inspect it
-                console.log("Fetched data:", data);
-                
-                if (!data || !data.prices || !Array.isArray(data.prices)) {
-                    throw new Error("Invalid data format received. Please check the API response.");
-                }
-                return data;
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                alert("Error fetching data: " + error.message);
-                return null;
-            }
-        }
+// Generate a trading verdict based on indicators
+async function generateVerdict(cryptoPair, timeframe) {
+    const marketData = await fetchMarketData(cryptoPair, timeframe);
 
-        function calculateSupportResistance(candles) {
-            let support = Math.min(...candles.map(candle => candle[1])); // Low
-            let resistance = Math.max(...candles.map(candle => candle[2])); // High
-            return { support, resistance };
-        }
+    if (!marketData) {
+        document.getElementById('verdict').innerHTML = "<p>Error fetching market data.</p>";
+        return;
+    }
 
-        function calculateEMA(candles, period = 20) {
-            const closes = candles.map(candle => candle[4]); // Closing prices
-            let ema = [];
-            let k = 2 / (period + 1);
-            ema.push(closes[0]); // First EMA is just the first close price
-            for (let i = 1; i < closes.length; i++) {
-                ema.push((closes[i] - ema[i - 1]) * k + ema[i - 1]);
-            }
-            return ema[ema.length - 1]; // Latest EMA
-        }
+    const closePrices = marketData.closePrices;
+    const lastPrice = closePrices[closePrices.length - 1];
 
-        function calculateRSI(candles, period = 14) {
-            const closes = candles.map(candle => candle[4]); // Closing prices
-            let gains = 0, losses = 0;
-            for (let i = 1; i <= period; i++) {
-                const change = closes[i] - closes[i - 1];
-                if (change > 0) gains += change;
-                else losses -= change;
-            }
-            let avgGain = gains / period, avgLoss = losses / period;
-            const rs = avgGain / avgLoss;
-            return 100 - (100 / (1 + rs));
-        }
+    // Calculate 50 EMA
+    const ema50 = calculateEMA(closePrices, 50);
+    const isBullish = lastPrice > ema50*1.07;
 
-        function calculateMACD(candles) {
-            const closes = candles.map(candle => candle[4]); // Closing prices
-            let ema12 = calculateEMA(candles, 12);
-            let ema26 = calculateEMA(candles, 26);
-            return ema12 - ema26; // MACD line
-        }
+    let verdictHtml = `<h3>${cryptoPair} Verdict (${timeframe})</h3>`;
 
-        function displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal) {
-            let verdict = buySignal ? "Buy" : "Do Not Buy";
-            const analysis = `
-                <h3>Analysis for ${timeframe}-hour Timeframe</h3>
-                <p><strong>RSI:</strong> ${rsi14.toFixed(2)}</p>
-                <p><strong>EMA (20):</strong> ${ema20.toFixed(2)}</p>
-                <p><strong>MACD:</strong> ${macd.toFixed(2)}</p>
-                <p><strong>Support Level:</strong> ${supportRes.support.toFixed(3)}</p>
-                <p><strong>Resistance Level:</strong> ${supportRes.resistance.toFixed(3)}</p>
-                <p><strong>Verdict:</strong> ${verdict}</p>
-            `;
-            document.getElementById("analysisResult").innerHTML = analysis;
-        }
+    if (isBullish) {
+        const dipBuy1 = ema50*1.01; // 1% above EMA
+        const dipBuy2 = ema50*0.985; // 1.5% below EMA
+        const stopLoss = ema50 * 0.97; // 3% below EMA
 
-        async function generateAnalysis() {
-            const crypto = document.getElementById("cryptoDropdown").value;
-            const timeframe = document.getElementById("timeframeDropdown").value;
-            let days = 1;
-            let interval = 'minute';
+        verdictHtml += `
+            <p><strong>It's bullish, let's place orders!</strong></p>
+            <ul>
+                <li>Dip Buy 1: ${dipBuy1.toFixed(2)}</li>
+                <li>Dip Buy 2: ${dipBuy2.toFixed(2)}</li>
+                <li>Stop Loss: ${stopLoss.toFixed(2)}</li>
+                <li>Current Price: ${lastPrice.toFixed(2)}</li>
+            </ul>
+        `;
+    } else {
+        const dipBuy1 = ema50 * 0.922; // 7.8% below EMA
+        const dipBuy2 = ema50 * 0.8505; // 14.95% below EMA
+        const stopLoss = ema50 * 0.815; // 18.5% below EMA
 
-            if (timeframe === "1") {
-                days = 1 / 24;
-                interval = 'minute';
-            } else if (timeframe === "4") {
-                days = 4 / 24;
-                interval = 'minute';
-            } else if (timeframe === "12") {
-                days = 12 / 24;
-                interval = 'minute';
-            } else if (timeframe === "24") {
-                days = 1;
-                interval = 'hour';
-            } else if (timeframe === "720") {
-                days = 30;
-                interval = 'day';
-            }
+        verdictHtml += `
+            <p><strong>It's a DIP, let's place buy orders a little deeper!</strong></p>
+            <ul>
+                <li>Dip Buy 1: ${dipBuy1.toFixed(2)}</li>
+                <li>Dip Buy 2: ${dipBuy2.toFixed(2)}</li>
+                <li>Stop Loss: ${stopLoss.toFixed(2)}</li>
+                <li>Current Price: ${lastPrice.toFixed(2)}</li>
+            </ul>
+        `;
+    }
 
-            document.getElementById("loadingSpinner").style.display = "block";
-            document.getElementById("analysisResult").style.display = "none";
+    document.getElementById('verdict').innerHTML = verdictHtml;
+}
 
-            const data = await fetchCandleData(crypto, interval, days);
+// Fetch market data from Binance API
+async function fetchMarketData(cryptoPair, timeframe) {
+    const apiUrl = `https://api.binance.com/api/v3/klines?symbol=${cryptoPair}&interval=${timeframe}&limit=100`;
+    try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const closePrices = data.map(item => parseFloat(item[4])); // Extract closing prices
+        return { closePrices };
+    } catch (error) {
+        console.error("Error fetching market data:", error);
+        return null;
+    }
+}
 
-            if (!data || !data.prices) {
-                alert("Error fetching valid data. Please try again.");
-                document.getElementById("loadingSpinner").style.display = "none";
-                return;
-            }
-
-            const candles = data.prices;
-            const supportRes = calculateSupportResistance(candles);
-            const ema20 = calculateEMA(candles);
-            const rsi14 = calculateRSI(candles);
-            const macd = calculateMACD(candles);
-
-            const buySignal = (rsi14 < 70) && (macd > 0) && (candles[candles.length - 1][4] > ema20) && (candles[candles.length - 1][4] > supportRes.support);
-
-            displayAnalysis(ema20, rsi14, macd, supportRes, timeframe, buySignal);
-
-            document.getElementById("loadingSpinner").style.display = "none";
-            document.getElementById("analysisResult").style.display = "block";
-        }
-    </script>
+// Calculate Exponential Moving Average (EMA)
+function calculateEMA(prices, period) {
+    const k = 2 / (period + 1);
+    let ema = prices.slice(0, period).reduce((a, b) => a + b) / period; // Start with SMA
+    for (let i = period; i < prices.length; i++) {
+        ema = prices[i] * k + ema * (1 - k);
+    }
+    return ema;
+}
+</script>
 
 </body>
 </html>
