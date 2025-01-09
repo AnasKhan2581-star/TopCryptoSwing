@@ -223,12 +223,12 @@ async function generateVerdict(cryptoPair, timeframe) {
         const stopLoss = ema50 * 0.97; // 3% below EMA
 
         verdictHtml += `
-            <p><strong>It's bullish, let's place orders!</strong></p>
+            <p><strong>It's bullish, let's place orders near 50ema</strong></p>
             <ul>
-                <li>Dip Buy 1: ${dipBuy1.toFixed(2)}</li>
-                <li>Dip Buy 2: ${dipBuy2.toFixed(2)}</li>
-                <li>Stop Loss: ${stopLoss.toFixed(2)}</li>
-                <li>Current Price: ${lastPrice.toFixed(2)}</li>
+                <li>Dip Buy 1: ${dipBuy1.toFixed(3)}</li>
+                <li>Dip Buy 2: ${dipBuy2.toFixed(3)}</li>
+                <li>Stop Loss: ${stopLoss.toFixed(3)}</li>
+                <li>Current Price: ${lastPrice.toFixed(3)}</li>
             </ul>
         `;
     } else {
@@ -239,10 +239,10 @@ async function generateVerdict(cryptoPair, timeframe) {
         verdictHtml += `
             <p><strong>It's a DIP, let's place buy orders a little deeper!</strong></p>
             <ul>
-                <li>Dip Buy 1: ${dipBuy1.toFixed(2)}</li>
-                <li>Dip Buy 2: ${dipBuy2.toFixed(2)}</li>
-                <li>Stop Loss: ${stopLoss.toFixed(2)}</li>
-                <li>Current Price: ${lastPrice.toFixed(2)}</li>
+                <li>Dip Buy 1: ${dipBuy1.toFixed(3)}</li>
+                <li>Dip Buy 2: ${dipBuy2.toFixed(3)}</li>
+                <li>Stop Loss: ${stopLoss.toFixed(3)}</li>
+                <li>Current Price: ${lastPrice.toFixed(3)}</li>
             </ul>
         `;
     }
