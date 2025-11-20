@@ -1,453 +1,777 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICT/SMC 2022 Model Scanner</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SMC Titan PRO — Multi-Strategy Scanner</title>
 
-    <style>
-        :root {
-            --bg-main: #09090b;
-            --bg-card: #131316;
-            --text-primary: #e4e4e7;
-            --text-secondary: #a1a1aa;
-            --accent: #3b82f6;
-            --success: #10b981;
-            --danger: #ef4444;
-            --border: #27272a;
-        }
+<style>
+/* --------------------------------------------
+   THEME COLORS
+--------------------------------------------- */
+:root {
+    --bg-main: #09090b;
+    --bg-card: #131316;
+    --text-primary: #e4e4e7;
+    --text-secondary: #a1a1aa;
+    --accent: #3b82f6;
+    --success: #10b981;
+    --danger: #ef4444;
+    --border: #27272a;
+}
 
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            font-family: 'JetBrains Mono', 'Consolas', monospace;
-            margin: 0;
-            padding: 10px;
-            height: 100vh;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
+/* --------------------------------------------
+   BASE
+--------------------------------------------- */
+body {
+    background: var(--bg-main);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    height: 100vh;
+    overflow: hidden;
+    box-sizing: border-box;
+}
 
-        /* ---------- GRID LAYOUT (Updated for responsiveness) ---------- */
-        .app-grid {
-            display: grid;
-            grid-template-columns: 300px 1fr;
-            grid-template-rows: auto 1fr;
-            gap: 12px;
-            height: calc(100vh - 20px);
-        }
+/* --------------------------------------------
+   GRID LAYOUT (RESPONSIVE)
+--------------------------------------------- */
+.app-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 15px;
+    height: calc(100vh - 24px);
+}
 
-        @media (max-width: 900px) {
-            .app-grid {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto auto 1fr;
-                height: auto;
-            }
-        }
+@media (max-width: 900px) {
+    .app-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        height: auto;
+    }
+}
 
-        header {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 12px;
-            padding-top: 5px;
-        }
+/* --------------------------------------------
+   HEADER
+--------------------------------------------- */
+header {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
 
-        @media (max-width: 600px) {
-            header { 
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-        }
+@media (max-width: 650px) {
+    header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+}
 
-        h1 {
-            margin: 0;
-            font-size: 1.2rem;
-        }
+h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+}
 
-        .tag {
-            background: var(--accent);
-            color: white;
-            font-size: 0.7rem;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin-left: 10px;
-        }
+.tag {
+    margin-left: 8px;
+    font-size: 0.7rem;
+    padding: 3px 7px;
+    background: var(--accent);
+    color: white;
+    border-radius: 4px;
+}
 
-        .controls {
-            display: flex;
-            gap: 10px;
-        }
+.controls {
+    display: flex;
+    gap: 10px;
+}
 
-        @media (max-width: 600px) {
-            .controls {
-                width: 100%;
-                justify-content: center;
-            }
-        }
+@media (max-width: 650px) {
+    .controls {
+        justify-content: center;
+        width: 100%;
+    }
+}
 
-        select, button {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            padding: 8px 14px;
-            font-family: inherit;
-            font-size: 0.85rem;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
+select, button {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 8px 14px;
+    font-family: inherit;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
-        /* ---------- SIDEBAR ---------- */
-        .sidebar {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            overflow-y: auto;
-            height: 100%;
-        }
+button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
 
-        @media (max-width: 900px) {
-            .sidebar {
-                height: auto;
-                max-height: 40vh;
-            }
-        }
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
-        .coin-item {
-            padding: 15px;
-            border-bottom: 1px solid var(--border);
-            cursor: pointer;
-            transition: background 0.1s;
-        }
+/* --------------------------------------------
+   SIDEBAR
+--------------------------------------------- */
+.sidebar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow-y: auto;
+    height: 100%;
+    padding-bottom: 20px;
+}
 
-        .coin-item:hover { background: #1c1c20; }
-        .coin-item.selected { background: #1c1c20; border-left: 3px solid var(--accent); }
+@media (max-width: 900px) {
+    .sidebar {
+        height: auto;
+        max-height: 40vh;
+    }
+}
 
-        .coin-header { display: flex; justify-content: space-between; }
+.coin-item {
+    padding: 15px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+}
 
-        .main-panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 20px;
-            overflow-y: auto;
-        }
+.coin-item:hover {
+    background: #1c1c20;
+}
 
-        @media (max-width: 900px) {
-            .main-panel {
-                max-height: none;
-            }
-        }
+.coin-item.selected {
+    background: #1c1c20;
+    border-left: 4px solid var(--accent);
+}
 
-        .setup-view { display: none; }
-        .setup-view.active { display: block; }
+.coin-header {
+    display: flex;
+    justify-content: space-between;
+}
 
-        /* Entry/SL/TP Responsive Grid */
-        .levels-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
+.strategy-tags {
+    margin-top: 6px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
 
-        @media (max-width: 700px) {
-            .levels-grid {
-                grid-template-columns: 1fr;
-            }
-        }
+.tag-mini {
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 0.65rem;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+}
 
-        .progress-line {
-            position: absolute;
-            bottom: 0; left: 0;
-            height: 3px;
-            background: var(--accent);
-            width: 0%;
-            transition: width 0.3s;
-        }
+/* --------------------------------------------
+   MAIN PANEL
+--------------------------------------------- */
+.main-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 22px;
+    overflow-y: auto;
+    position: relative;
+}
 
-        .hidden { display: none !important; }
-    </style>
+.progress-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.25s;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --------------------------------------------
+   LOADING SPINNER (CENTERED)
+--------------------------------------------- */
+.spinner-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.spinner {
+    width: 55px;
+    height: 55px;
+    border: 5px solid var(--bg-card);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --------------------------------------------
+   SETUP PANEL
+--------------------------------------------- */
+.setup-view {
+    display: none;
+}
+
+.setup-view.active {
+    display: block;
+}
+
+.levels-grid {
+    margin-top: 22px;
+    display: grid;
+    gap: 15px;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 700px) {
+    .levels-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.level-box {
+    background: #1c1c20;
+    border: 1px solid var(--border);
+    padding: 15px;
+    border-radius: 6px;
+}
+
+.logic-log {
+    background: rgba(59,130,246,0.05);
+    border: 1px solid rgba(59,130,246,0.25);
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+</style>
 </head>
 
-<body>
+    <body>
 
 <div class="app-grid">
 
-    <header>
-        <div style="display:flex; align-items:center;">
-            <h1>SMC Titan <span class="tag">PRO LOGIC</span></h1>
-        </div>
+<header>
+    <h1>SMC Titan <span class="tag">PRO LOGIC</span></h1>
 
-        <div class="controls">
-            <select id="tfInput">
-                <option value="5m">5 Min (Scalp)</option>
-                <option value="15m" selected>15 Min</option>
-                <option value="1h">1 Hour</option>
-                <option value="4h">4 Hour</option>
-            </select>
+    <div class="controls">
+        <select id="tfInput">
+            <option value="5m">5m (Scalp)</option>
+            <option value="15m" selected>15m (Intraday)</option>
+            <option value="1h">1h (Swing)</option>
+            <option value="4h">4h (Macro)</option>
+        </select>
 
-            <button id="scanBtn" onclick="runScanner()">Start Scan</button>
-        </div>
-    </header>
+        <button id="scanBtn" onclick="runScanner()">Start Scan</button>
+    </div>
+</header>
 
-    <div class="sidebar" id="resultsList">
-        <div style="padding:20px; text-align:center; font-size:0.8rem; color:var(--text-secondary)">
-            Waiting for scan...
-            <br><br>
-            <small>Strict Price Action Only. No Indicators.</small>
-        </div>
+<!-- SIDEBAR -->
+<div class="sidebar" id="resultsList">
+    <div style="padding:20px; text-align:center; color:var(--text-secondary)">
+        Waiting for scan…<br><br>
+        <small>This scanner uses: ICT 2022 Model + Breaker + BPR + HTF Bias</small>
+    </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div class="main-panel" id="mainPanel">
+
+    <!-- Loading Spinner -->
+    <div id="spinner" class="spinner-overlay hidden">
+        <div class="spinner"></div>
     </div>
 
-    <div class="main-panel" id="mainPanel">
+    <!-- Progress Bar -->
+    <div class="progress-line" id="progressBar"></div>
 
-        <div class="progress-line" id="progressBar"></div>
+    <!-- Empty state -->
+    <div id="emptyState" class="empty-state">
+        <h2 style="color: var(--text-primary)">Ready to Scan</h2>
+        <p>
+            This scanner detects:<br><br>
+            • ICT 2022 Model<br>
+            • Breaker Blocks (Bullish)<br>
+            • BPR (Balanced Price Range)<br>
+            • HTF Bias (Professional)<br>
+            • Institutional Probability Score
+        </p>
+    </div>
 
-        <div id="emptyState" class="empty-state">
-            <h2 style="color: var(--text-primary)">Ready to Scan</h2>
-            <p>ICT 2022 Model:<br> Sweep → MSS → FVG Return</p>
+    <!-- Detailed View -->
+    <div id="setupView" class="setup-view">
+        <h1 id="tickerDisplay" style="font-size: 2rem;">COIN</h1>
+        <div style="margin-top:12px; color:var(--text-secondary)">
+            <strong>Probability: </strong>
+            <span id="probDisplay">--%</span>
         </div>
 
-        <div id="setupView" class="setup-view">
-
-            <h1 id="tickerDisplay" style="font-size: 2rem;">BTCUSDT</h1>
-
-            <div class="data-row">
-                <span>Current Price</span>
-                <span id="priceDisplay">--</span>
+        <!-- LEVEL BOXES -->
+        <div class="levels-grid">
+            <div class="level-box">
+                <div style="font-size:0.75rem; color:var(--text-secondary)">ENTRY</div>
+                <div id="entryDisplay" style="font-size:1.1rem; margin-top:6px">--</div>
             </div>
 
-            <!-- ENTRY / SL / TP -->
-            <div class="levels-grid">
-                <div style="padding: 15px; background:#1c1c20; border-radius:6px;">
-                    ENTRY<br>
-                    <strong id="entryDisplay">--</strong>
-                </div>
-                <div style="padding: 15px; background:#1c1c20; border-radius:6px;">
-                    STOP LOSS<br>
-                    <strong id="slDisplay">--</strong>
-                </div>
-                <div style="padding: 15px; background:#1c1c20; border-radius:6px;">
-                    TAKE PROFIT<br>
-                    <strong id="tpDisplay">--</strong>
-                </div>
+            <div class="level-box">
+                <div style="font-size:0.75rem; color:var(--text-secondary)">STOP LOSS</div>
+                <div id="slDisplay" style="font-size:1.1rem; margin-top:6px">--</div>
             </div>
 
-            <div id="logicSteps" style="margin-top:20px;"></div>
-
-            <div class="chart-simulation">
-                <strong>Algorithm Log:</strong><br>
-                <span id="algoLog">Loading...</span>
+            <div class="level-box">
+                <div style="font-size:0.75rem; color:var(--text-secondary)">TAKE PROFIT</div>
+                <div id="tpDisplay" style="font-size:1.1rem; margin-top:6px">--</div>
             </div>
-
         </div>
 
+        <!-- LOGIC EXPLANATION -->
+        <div id="logicLog" class="logic-log"></div>
     </div>
 
 </div>
+</div>
 
-<script>
-    const BINANCE_API = "https://api.binance.com/api/v3";
-    let isScanning = false;
+        <script>
 
-    /* ---------- SCANNER ---------- */
-    async function runScanner() {
-        if (isScanning) return;
-        isScanning = true;
+/* ================================================================
+   CONFIG
+================================================================ */
+const BINANCE = "https://api.binance.com/api/v3";
+let isScanning = false;
 
-        const tf = document.getElementById("tfInput").value;
-        const btn = document.getElementById("scanBtn");
-        const list = document.getElementById("resultsList");
-        const bar = document.getElementById("progressBar");
+/* HTF Mapping (Option A) */
+const HTF_MAP = {
+    "5m": "1h",
+    "15m": "4h",
+    "1h": "1d",
+    "4h": "1w"
+};
 
-        btn.disabled = true;
-        btn.innerText = "Scanning...";
-        list.innerHTML = "";
-        bar.style.width = "0%";
+/* ================================================================
+   MAIN SCANNER ENTRY
+================================================================ */
+async function runScanner() {
+    if (isScanning) return;
+    isScanning = true;
 
-        const pairs = await getTopVolumePairs();
-        let found = 0;
+    const tf = document.getElementById("tfInput").value;
+    const btn = document.getElementById("scanBtn");
+    const bar = document.getElementById("progressBar");
+    const list = document.getElementById("resultsList");
+    const spinner = document.getElementById("spinner");
 
-        for (let i = 0; i < pairs.length; i++) {
-            const symbol = pairs[i];
-            bar.style.width = `${((i + 1) / pairs.length) * 100}%`;
-            await sleep(150);
+    list.innerHTML = "";
+    btn.disabled = true;
+    btn.innerText = "Scanning...";
+    spinner.classList.remove("hidden");
 
-            try {
-                const candles = await getCandles(symbol, tf);
-                if (candles.length < 50) continue;
+    const pairs = await getTopVolumePairs();
+    let combinedResults = [];
 
-                const setup = analyzeICT2022(symbol, candles);
-                if (setup) {
-                    found++;
-                    addResultToList(setup);
-                }
-            } catch (err) {}
-        }
+    for (let i = 0; i < pairs.length; i++) {
+        const symbol = pairs[i];
 
-        if (!found) {
-            list.innerHTML = `<div style="padding:20px; text-align:center; color:var(--text-secondary)">
-                No strict setups found.
-            </div>`;
-        }
+        // progress bar
+        const pct = ((i+1) / pairs.length) * 100;
+        bar.style.width = pct + "%";
 
-        isScanning = false;
-        btn.disabled = false;
-        btn.innerText = "Start Scan";
+        await sleep(120);
 
-        setTimeout(() => bar.style.width = "0%", 800);
-    }
-
-    /* ---------- ICT LOGIC (unchanged) ---------- */
-    function analyzeICT2022(symbol, candles) {
-        const recent = candles.slice(-60);
-        const swings = getFractals(recent);
-        if (swings.lows.length < 2) return null;
-
-        for (let i = recent.length - 5; i >= 10; i--) {
-            let c = recent[i];
-
-            for (let s = 0; s < swings.lows.length; s++) {
-                let low = swings.lows[s];
-
-                if (low.index < i - 3 && c.low < low.price) {
-                    let interHigh = 0;
-                    for (let k = low.index; k <= i; k++) {
-                        interHigh = Math.max(interHigh, recent[k].high);
-                    }
-
-                    let mssIndex = -1;
-                    for (let m = i + 1; m < recent.length; m++) {
-                        if (recent[m].close > interHigh) {
-                            mssIndex = m;
-                            break;
-                        }
-                    }
-
-                    if (mssIndex !== -1) {
-                        let fvg = findFVG(recent, i, mssIndex);
-                        if (fvg) {
-                            let cur = recent[recent.length - 1].close;
-
-                            if (cur <= fvg.top && cur >= fvg.bottom * 0.999) {
-                                return {
-                                    symbol,
-                                    price: cur,
-                                    sweepLevel: low.price,
-                                    mssLevel: interHigh,
-                                    fvg,
-                                    stopLoss: c.low,
-                                    takeProfit: interHigh * 1.02
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    function findFVG(c, start, end) {
-        for (let i = start + 1; i < end; i++) {
-            let p = c[i - 1];
-            let n = c[i + 1];
-
-            if (c[i].close > c[i].open && p.high < n.low) {
-                return { top: n.low, bottom: p.high };
-            }
-        }
-        return null;
-    }
-
-    function getFractals(c) {
-        let lows = [];
-        for (let i = 2; i < c.length - 2; i++) {
-            if (
-                c[i].low < c[i-1].low &&
-                c[i].low < c[i-2].low &&
-                c[i].low < c[i+1].low &&
-                c[i].low < c[i+2].low
-            ) {
-                lows.push({ price: c[i].low, index: i });
-            }
-        }
-        return { lows };
-    }
-
-    /* ---------- API ---------- */
-    async function getTopVolumePairs() {
         try {
-            let res = await fetch(`${BINANCE_API}/ticker/24hr`);
-            let data = await res.json();
-            return data
-                .filter(d => d.symbol.endsWith("USDT"))
-                .sort((a, b) => b.quoteVolume - a.quoteVolume)
-                .slice(0, 50)
-                .map(d => d.symbol);
-        } catch {
-            return [];
+            const candles = await getCandles(symbol, tf);
+            if (!candles.length) continue;
+
+            const htf = HTF_MAP[tf];
+            const htfCandles = await getCandles(symbol, htf);
+
+            // High timeframe bias
+            const bias = getHTFBias(htfCandles);
+
+            // ICT 2022 Model
+            const ict = detectICT2022(symbol, candles);
+
+            // Breaker block
+            const breaker = detectBreakerBlock(symbol, candles);
+
+            // BPR
+            const bpr = detectBPR(symbol, candles);
+
+            if (ict || breaker || bpr) {
+                const score = generateProbabilityScore({
+                    bias, ict, breaker, bpr
+                });
+
+                combinedResults.push({
+                    symbol,
+                    bias,
+                    ict,
+                    breaker,
+                    bpr,
+                    score
+                });
+            }
+
+        } catch(err) {
+            console.error("Error:", symbol, err);
         }
     }
 
-    async function getCandles(symbol, tf) {
-        let url = `${BINANCE_API}/klines?symbol=${symbol}&interval=${tf}&limit=100`;
-        let res = await fetch(url);
-        let d = await res.json();
-        return d.map(c => ({
-            time: c[0],
-            open: +c[1],
-            high: +c[2],
-            low: +c[3],
-            close: +c[4]
+    renderList(combinedResults);
+
+    spinner.classList.add("hidden");
+    btn.disabled = false;
+    btn.innerText = "Start Scan";
+    isScanning = false;
+
+    setTimeout(()=> bar.style.width="0%", 800);
+}
+
+/* ================================================================
+   API FETCHERS
+================================================================ */
+
+async function getTopVolumePairs() {
+    try {
+        const r = await fetch(`${BINANCE}/ticker/24hr`);
+        const j = await r.json();
+        return j
+            .filter(d => d.symbol.endsWith("USDT"))
+            .sort((a,b)=> b.quoteVolume - a.quoteVolume)
+            .slice(0,50)
+            .map(x=>x.symbol);
+    } catch {
+        return [];
+    }
+}
+
+async function getCandles(symbol, interval) {
+    try {
+        const r = await fetch(`${BINANCE}/klines?symbol=${symbol}&interval=${interval}&limit=200`);
+        const j = await r.json();
+
+        return j.map(d => ({
+            time: d[0],
+            open: +d[1],
+            high: +d[2],
+            low: +d[3],
+            close: +d[4]
         }));
+    } catch {
+        return [];
+    }
+}
+
+/* ================================================================
+   HTF BIAS ENGINE
+================================================================ */
+
+function getHTFBias(c) {
+    if (c.length < 20) return "neutral";
+
+    // HTF swing structure
+    let last = c.slice(-12);
+    let higherHigh = last[11].high > last[3].high;
+    let higherLow  = last[11].low > last[3].low;
+
+    if (higherHigh && higherLow) return "bullish";
+
+    return "neutral";
+}
+
+/* ================================================================
+   ICT 2022 MODEL DETECTOR
+================================================================ */
+function detectICT2022(symbol, c) {
+    if (c.length < 60) return null;
+
+    const recent = c.slice(-60);
+    const swings = getFractals(recent);
+
+    if (swings.lows.length < 2) return null;
+
+    for (let i = recent.length - 5; i >= 10; i--) {
+        let sweepCandle = recent[i];
+
+        for (let s = 0; s < swings.lows.length; s++) {
+            let low = swings.lows[s];
+
+            if (low.index < i - 3 && sweepCandle.low < low.price) {
+
+                // MSS
+                let interHigh = 0;
+                for (let k = low.index; k <= i; k++) {
+                    interHigh = Math.max(interHigh, recent[k].high);
+                }
+
+                let mssIndex = -1;
+                for (let m = i+1; m < recent.length; m++) {
+                    if (recent[m].close > interHigh) {
+                        mssIndex = m;
+                        break;
+                    }
+                }
+                if (mssIndex === -1) continue;
+
+                // FVG
+                const fvg = findBullishFVG(recent, i, mssIndex);
+                if (!fvg) continue;
+
+                const current = recent[recent.length-1].close;
+                if (current >= fvg.bottom * 0.995 && current <= fvg.top) {
+                    return {
+                        type: "ICT",
+                        symbol,
+                        sweep: low.price,
+                        mss: interHigh,
+                        fvg,
+                        entry: fvg.top,
+                        sl: sweepCandle.low,
+                        tp: interHigh * 1.02,
+                        explanation: `
+<b>ICT 2022 Model detected:</b><br><br>
+• Sell-side sweep at ${low.price}<br>
+• MSS above ${interHigh}<br>
+• Bullish FVG formed (${fvg.bottom} → ${fvg.top})<br>
+• Current price returned into imbalance<br>
+                        `
+                    };
+                }
+            }
+        }
+    }
+    return null;
+}
+
+/* ================================================================
+   BREAKER BLOCK DETECTOR (Bullish Only)
+================================================================ */
+function detectBreakerBlock(symbol, c) {
+    if (c.length < 50) return null;
+
+    const recent = c.slice(-50);
+
+    for (let i = 5; i < recent.length - 5; i++) {
+        let prevDown = recent[i-1];
+        let current = recent[i];
+
+        // breaker happens after failed bearish OB
+        if (prevDown.high < current.close && current.close > recent[i+1].high) {
+            return {
+                type: "Breaker",
+                symbol,
+                entry: current.open,
+                sl: Math.min(prevDown.low, current.low),
+                tp: current.high * 1.03,
+                explanation: `
+<b>Breaker Block:</b><br><br>
+• Previous bearish OB failed<br>
+• Strong displacement through OB high<br>
+• Bullish breaker identified<br>
+                `
+            };
+        }
     }
 
-    /* ---------- UI ---------- */
-    function addResultToList(setup) {
-        const list = document.getElementById("resultsList");
-        if (!list.innerHTML.includes("coin-item")) list.innerHTML = "";
+    return null;
+}
 
-        let el = document.createElement("div");
+/* ================================================================
+   BPR DETECTOR
+================================================================ */
+function detectBPR(symbol, c) {
+    if (c.length < 30) return null;
+
+    const recent = c.slice(-30);
+
+    for (let i = 2; i < recent.length - 2; i++) {
+        let c1 = recent[i-1];
+        let c2 = recent[i+1];
+
+        if (c1.high < c2.low) {
+            return {
+                type: "BPR",
+                symbol,
+                entry: c2.low,
+                sl: c1.low,
+                tp: c2.low * 1.03,
+                explanation: `
+<b>Balanced Price Range:</b><br><br>
+• Opposing FVGs align<br>
+• Market seeks balance<br>
+• Bullish BPR zone detected<br>
+                `
+            };
+        }
+    }
+
+    return null;
+}
+
+/* ================================================================
+   FRACTAL & FVG UTILS
+================================================================ */
+function getFractals(c) {
+    let lows = [];
+    for (let i=2; i<c.length-2; i++) {
+        if (c[i].low < c[i-1].low && c[i].low < c[i-2].low &&
+            c[i].low < c[i+1].low && c[i].low < c[i+2].low) {
+            lows.push({ index:i, price:c[i].low });
+        }
+    }
+    return { lows };
+}
+
+function findBullishFVG(c, start, end) {
+    for (let i = start+1; i < end; i++) {
+        let prev = c[i-1];
+        let next = c[i+1];
+
+        if (c[i].close > c[i].open && prev.high < next.low) {
+            return {
+                bottom: prev.high,
+                top: next.low
+            };
+        }
+    }
+    return null;
+}
+
+/* ================================================================
+   PROBABILITY ENGINE (Institutional)
+================================================================ */
+function generateProbabilityScore({ bias, ict, breaker, bpr }) {
+    let score = 0;
+
+    if (bias === "bullish") score += 35;
+    if (ict) score += 30;
+    if (breaker) score += 20;
+    if (bpr) score += 15;
+
+    if (score > 95) score = 95;
+    if (score < 10) score += 5;
+
+    return score;
+}
+
+/* ================================================================
+   RENDER LIST
+================================================================ */
+function renderList(results) {
+    const list = document.getElementById("resultsList");
+
+    if (!results.length) {
+        list.innerHTML = `
+        <div style="padding:20px; text-align:center;">
+        No setups found.
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = "";
+
+    results.sort((a,b)=> b.score - a.score);
+
+    results.forEach(r => {
+        const el = document.createElement("div");
         el.className = "coin-item";
+
+        const tags = [];
+        if (r.ict) tags.push(`<span class="tag-mini">ICT</span>`);
+        if (r.breaker) tags.push(`<span class="tag-mini">Breaker</span>`);
+        if (r.bpr) tags.push(`<span class="tag-mini">BPR</span>`);
+
         el.innerHTML = `
             <div class="coin-header">
-                <span>${setup.symbol}</span>
-                <span class="coin-setup">ICT 2022</span>
+                <span>${r.symbol}</span>
+                <span>${r.score}%</span>
             </div>
-            <small>FVG ${setup.fvg.bottom.toFixed(4)} - ${setup.fvg.top.toFixed(4)}</small>
+            <div class="strategy-tags">${tags.join("")}</div>
         `;
-        el.onclick = () => renderSetup(setup, el);
+
+        el.onclick = () => renderDetails(r);
         list.appendChild(el);
+    });
+}
+
+/* ================================================================
+   RENDER FULL EXPLANATION PANEL
+================================================================ */
+function renderDetails(r) {
+    document.querySelectorAll(".coin-item").forEach(x=>x.classList.remove("selected"));
+    event.target.closest(".coin-item").classList.add("selected");
+
+    document.getElementById("emptyState").classList.add("hidden");
+    const view = document.getElementById("setupView");
+    view.classList.add("active");
+
+    document.getElementById("tickerDisplay").innerText = r.symbol;
+    document.getElementById("probDisplay").innerText = r.score + "%";
+
+    let entry = "--", sl = "--", tp="--", explanation="";
+    if (r.ict) {
+        entry = r.ict.entry;
+        sl = r.ict.sl;
+        tp = r.ict.tp;
+        explanation += r.ict.explanation + "<br>";
+    }
+    if (r.breaker) {
+        entry = r.breaker.entry;
+        sl = r.breaker.sl;
+        tp = r.breaker.tp;
+        explanation += r.breaker.explanation + "<br>";
+    }
+    if (r.bpr) {
+        entry = r.bpr.entry;
+        sl = r.bpr.sl;
+        tp = r.bpr.tp;
+        explanation += r.bpr.explanation + "<br>";
     }
 
-    function renderSetup(setup, el) {
-        document.querySelectorAll(".coin-item").forEach(i => i.classList.remove("selected"));
-        el.classList.add("selected");
+    document.getElementById("entryDisplay").innerText = entry;
+    document.getElementById("slDisplay").innerText = sl;
+    document.getElementById("tpDisplay").innerText = tp;
 
-        document.getElementById("emptyState").classList.add("hidden");
-        document.getElementById("setupView").classList.add("active");
-
-        document.getElementById("tickerDisplay").innerText = setup.symbol;
-        document.getElementById("priceDisplay").innerText = setup.price;
-        document.getElementById("entryDisplay").innerText = setup.fvg.top;
-        document.getElementById("slDisplay").innerText = setup.stopLoss;
-        document.getElementById("tpDisplay").innerText = setup.takeProfit;
-
-        document.getElementById("logicSteps").innerHTML = `
-            ✔ Sweep at ${setup.sweepLevel}<br>
-            ✔ MSS above ${setup.mssLevel}<br>
-            ✔ FVG detected<br>
-            ✔ Price returned into FVG
-        `;
+    if (r.bias === "bullish") {
+        explanation += `<br><b>HTF Bias:</b> Bullish (Directional Alignment Confirmed)`;
     }
 
-    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    document.getElementById("logicLog").innerHTML = explanation;
+}
+
+/* ================================================================
+   UTILS
+================================================================ */
+function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+}
+
 </script>
 
-</body>
+    </body>
+
 </html>
