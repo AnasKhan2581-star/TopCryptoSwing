@@ -28,14 +28,14 @@ body{
   background:var(--bg-main);
   color:var(--text);
   font-family:"JetBrains Mono",monospace;
-  height:100vh;
-  overflow:hidden;
+  min-height:100vh;      /* was: height:100vh */
+  overflow:auto;
 }
 
 .app-grid{
   display:grid;
   grid-template-columns:280px 1fr 360px;
-  grid-template-rows:100vh;
+  grid-template-rows:minmax(0, 1fr);
 }
 
 @media (max-width:1000px){
