@@ -3,775 +3,653 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SMC Titan PRO — Multi-Strategy Scanner</title>
+<title>Liquidity Trap Scanner v3.0 — Bullish Institutional Engine</title>
 
 <style>
-/* --------------------------------------------
-   THEME COLORS
---------------------------------------------- */
 :root {
-    --bg-main: #09090b;
-    --bg-card: #131316;
-    --text-primary: #e4e4e7;
-    --text-secondary: #a1a1aa;
-    --accent: #3b82f6;
-    --success: #10b981;
-    --danger: #ef4444;
-    --border: #27272a;
+  --bg-main:#050509;
+  --bg-card:#111118;
+  --bg-panel:#181820;
+  --border:#262636;
+  --accent:#3b82f6;
+  --accent-soft:#60a5fa;
+  --text:#e5e7eb;
+  --text-soft:#9ca3af;
+  --green:#10b981;
+  --red:#ef4444;
+  --radius:10px;
 }
 
-/* --------------------------------------------
-   BASE
---------------------------------------------- */
-body {
-    background: var(--bg-main);
-    color: var(--text-primary);
-    margin: 0;
-    padding: 12px;
-    font-family: 'JetBrains Mono', monospace;
-    height: 100vh;
-    overflow: hidden;
-    box-sizing: border-box;
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  padding:0;
+  background:var(--bg-main);
+  color:var(--text);
+  font-family:"JetBrains Mono",monospace;
+  height:100vh;
+  overflow:hidden;
 }
 
-/* --------------------------------------------
-   GRID LAYOUT (RESPONSIVE)
---------------------------------------------- */
-.app-grid {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 15px;
-    height: calc(100vh - 24px);
+.app-grid{
+  display:grid;
+  grid-template-columns:280px 1fr 360px;
+  grid-template-rows:100vh;
 }
 
-@media (max-width: 900px) {
-    .app-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto auto 1fr;
-        height: auto;
-    }
+@media (max-width:1000px){
+  .app-grid{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto auto;
+    height:auto;
+  }
 }
 
-/* --------------------------------------------
-   HEADER
---------------------------------------------- */
-header {
-    grid-column: 1 / -1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
+.sidebar{
+  background:var(--bg-card);
+  border-right:1px solid var(--border);
+  padding:18px;
+  overflow-y:auto;
 }
 
-@media (max-width: 650px) {
-    header {
-        flex-direction: column;
-        text-align: center;
-        gap: 10px;
-    }
+.sidebar h2{
+  margin:0 0 12px 0;
+  font-size:1.05rem;
 }
 
-h1 {
-    margin: 0;
-    font-size: 1.25rem;
-    display: flex;
-    align-items: center;
+.main-panel{
+  background:var(--bg-main);
+  padding:22px;
+  position:relative;
+  overflow-y:auto;
 }
 
-.tag {
-    margin-left: 8px;
-    font-size: 0.7rem;
-    padding: 3px 7px;
-    background: var(--accent);
-    color: white;
-    border-radius: 4px;
+.drawer{
+  background:var(--bg-card);
+  border-left:1px solid var(--border);
+  padding:18px;
+  overflow-y:auto;
 }
 
-.controls {
-    display: flex;
-    gap: 10px;
+@media (max-width:1000px){
+  .drawer{
+    border-left:none;
+    border-top:1px solid var(--border);
+  }
 }
 
-@media (max-width: 650px) {
-    .controls {
-        justify-content: center;
-        width: 100%;
-    }
+.tf-select, .scan-btn{
+  padding:8px 14px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--bg-panel);
+  color:var(--text);
+  font-family:inherit;
+  font-size:0.9rem;
+  cursor:pointer;
 }
 
-select, button {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    padding: 8px 14px;
-    font-family: inherit;
-    border-radius: 5px;
-    cursor: pointer;
+.scan-btn:hover{
+  border-color:var(--accent);
+  color:var(--accent-soft);
 }
 
-button:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+.filter-title{
+  font-size:0.8rem;
+  color:var(--text-soft);
+  margin-bottom:4px;
 }
 
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.coin-list{
+  margin-top:10px;
 }
 
-/* --------------------------------------------
-   SIDEBAR
---------------------------------------------- */
-.sidebar {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow-y: auto;
-    height: 100%;
-    padding-bottom: 20px;
+.coin-item{
+  padding:10px 12px;
+  margin-bottom:8px;
+  background:var(--bg-panel);
+  border-radius:8px;
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:0.15s;
 }
 
-@media (max-width: 900px) {
-    .sidebar {
-        height: auto;
-        max-height: 40vh;
-    }
+.coin-item:hover{
+  border-color:var(--accent);
 }
 
-.coin-item {
-    padding: 15px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s;
+.coin-item.active{
+  background:#1d1d27;
+  border-left:4px solid var(--accent);
 }
 
-.coin-item:hover {
-    background: #1c1c20;
+.coin-symbol{
+  font-size:0.92rem;
 }
 
-.coin-item.selected {
-    background: #1c1c20;
-    border-left: 4px solid var(--accent);
+.tag-mini{
+  display:inline-block;
+  font-size:0.7rem;
+  padding:1px 5px;
+  border-radius:4px;
+  border:1px solid var(--accent);
+  color:var(--accent-soft);
+  margin-top:4px;
 }
 
-.coin-header {
-    display: flex;
-    justify-content: space-between;
+.header-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
 }
 
-.strategy-tags {
-    margin-top: 6px;
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+@media (max-width:600px){
+  .header-top{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
 }
 
-.tag-mini {
-    border-radius: 3px;
-    padding: 2px 5px;
-    font-size: 0.65rem;
-    border: 1px solid var(--accent);
-    color: var(--accent);
+.status-text{
+  font-size:0.8rem;
+  color:var(--text-soft);
+  margin-bottom:12px;
 }
 
-/* --------------------------------------------
-   MAIN PANEL
---------------------------------------------- */
-.main-panel {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 22px;
-    overflow-y: auto;
-    position: relative;
+.visual-box{
+  background:var(--bg-panel);
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  padding:16px;
+  min-height:180px;
+  font-size:0.85rem;
+  color:var(--text-soft);
 }
 
-.progress-line {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 3px;
-    width: 0%;
-    background: var(--accent);
-    transition: width 0.25s;
+/* Spinner + Progress */
+.spinner-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,0.45);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:50;
 }
 
-.hidden {
-    display: none !important;
+.spinner{
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  border:5px solid var(--bg-panel);
+  border-top-color:var(--accent);
+  animation:spin .7s linear infinite;
 }
 
-/* --------------------------------------------
-   LOADING SPINNER (CENTERED)
---------------------------------------------- */
-.spinner-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    backdrop-filter: blur(2px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 50;
+@keyframes spin{
+  to{transform:rotate(360deg);}
 }
 
-.spinner {
-    width: 55px;
-    height: 55px;
-    border: 5px solid var(--bg-card);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
+.hidden{display:none !important;}
+
+.progress-line{
+  position:absolute;
+  left:0;
+  bottom:0;
+  height:3px;
+  background:var(--accent);
+  width:0%;
+  transition:width 0.2s;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* Drawer info */
+.drawer h2{
+  margin-top:0;
+  font-size:1.05rem;
 }
 
-/* --------------------------------------------
-   SETUP PANEL
---------------------------------------------- */
-.setup-view {
-    display: none;
+.info-block{
+  background:var(--bg-panel);
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  padding:12px 14px;
+  margin-bottom:12px;
+  font-size:0.83rem;
 }
 
-.setup-view.active {
-    display: block;
+.level-row{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:4px;
 }
 
-.levels-grid {
-    margin-top: 22px;
-    display: grid;
-    gap: 15px;
-    grid-template-columns: repeat(3, 1fr);
+#logicLog{
+  white-space:pre-line;
 }
-
-@media (max-width: 700px) {
-    .levels-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.level-box {
-    background: #1c1c20;
-    border: 1px solid var(--border);
-    padding: 15px;
-    border-radius: 6px;
-}
-
-.logic-log {
-    background: rgba(59,130,246,0.05);
-    border: 1px solid rgba(59,130,246,0.25);
-    padding: 15px;
-    margin-top: 20px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-}
-
 </style>
 </head>
-
-    <body>
+<body>
 
 <div class="app-grid">
 
-<header>
-    <h1>SMC Titan <span class="tag">PRO LOGIC</span></h1>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Liquidity Trap Scanner</h2>
 
-    <div class="controls">
-        <select id="tfInput">
-            <option value="5m">5m (Scalp)</option>
-            <option value="15m" selected>15m (Intraday)</option>
-            <option value="1h">1h (Swing)</option>
-            <option value="4h">4h (Macro)</option>
-        </select>
-
-        <button id="scanBtn" onclick="runScanner()">Start Scan</button>
+    <div style="margin-bottom:18px;">
+      <div class="filter-title">Timeframe</div>
+      <select id="tfInput" class="tf-select">
+        <option value="5m">5m</option>
+        <option value="15m" selected>15m</option>
+        <option value="1h">1h</option>
+        <option value="4h">4h</option>
+      </select>
     </div>
-</header>
 
-<!-- SIDEBAR -->
-<div class="sidebar" id="resultsList">
-    <div style="padding:20px; text-align:center; color:var(--text-secondary)">
-        Waiting for scan…<br><br>
-        <small>This scanner uses: ICT 2022 Model + Breaker + BPR + HTF Bias</small>
+    <div class="filter-title">Model</div>
+    <div style="font-size:0.75rem;color:var(--text-soft);margin-bottom:18px;">
+      • Only Bullish Liquidity Trap Setups<br/>
+      • Fake breakdown of support / bearish patterns<br/>
+      • Strict filters (high quality only)
     </div>
-</div>
 
-<!-- MAIN PANEL -->
-<div class="main-panel" id="mainPanel">
+    <h2>Coins</h2>
+    <div id="resultsList" class="coin-list">
+      <div style="padding:10px;color:var(--text-soft);text-align:center;">
+        Waiting for scan...
+      </div>
+    </div>
+  </div>
 
-    <!-- Loading Spinner -->
+  <!-- MAIN PANEL -->
+  <div class="main-panel" id="mainPanel">
+
     <div id="spinner" class="spinner-overlay hidden">
-        <div class="spinner"></div>
+      <div class="spinner"></div>
     </div>
 
-    <!-- Progress Bar -->
-    <div class="progress-line" id="progressBar"></div>
-
-    <!-- Empty state -->
-    <div id="emptyState" class="empty-state">
-        <h2 style="color: var(--text-primary)">Ready to Scan</h2>
-        <p>
-            This scanner detects:<br><br>
-            • ICT 2022 Model<br>
-            • Breaker Blocks (Bullish)<br>
-            • BPR (Balanced Price Range)<br>
-            • HTF Bias (Professional)<br>
-            • Institutional Probability Score
-        </p>
-    </div>
-
-    <!-- Detailed View -->
-    <div id="setupView" class="setup-view">
-        <h1 id="tickerDisplay" style="font-size: 2rem;">COIN</h1>
-        <div style="margin-top:12px; color:var(--text-secondary)">
-            <strong>Probability: </strong>
-            <span id="probDisplay">--%</span>
+    <div class="header-top">
+      <div>
+        <div style="font-size:1.05rem;">Institutional Bullish Trap Engine v3.0</div>
+        <div style="font-size:0.75rem;color:var(--text-soft);">
+          Sell-side liquidity sweep → Displacement + FVG → BOS → Return to FVG
         </div>
-
-        <!-- LEVEL BOXES -->
-        <div class="levels-grid">
-            <div class="level-box">
-                <div style="font-size:0.75rem; color:var(--text-secondary)">ENTRY</div>
-                <div id="entryDisplay" style="font-size:1.1rem; margin-top:6px">--</div>
-            </div>
-
-            <div class="level-box">
-                <div style="font-size:0.75rem; color:var(--text-secondary)">STOP LOSS</div>
-                <div id="slDisplay" style="font-size:1.1rem; margin-top:6px">--</div>
-            </div>
-
-            <div class="level-box">
-                <div style="font-size:0.75rem; color:var(--text-secondary)">TAKE PROFIT</div>
-                <div id="tpDisplay" style="font-size:1.1rem; margin-top:6px">--</div>
-            </div>
-        </div>
-
-        <!-- LOGIC EXPLANATION -->
-        <div id="logicLog" class="logic-log"></div>
+      </div>
+      <button id="scanBtn" class="scan-btn" onclick="runScanner()">Scan Now</button>
     </div>
+
+    <div id="scanStatus" class="status-text">
+      Ready to scan.
+    </div>
+
+    <div id="visualArea" class="visual-box">
+      Select a coin from the left list after scanning to view its trap structure explanation.
+    </div>
+
+    <div id="progressBar" class="progress-line"></div>
+  </div>
+
+  <!-- RIGHT DRAWER -->
+  <div class="drawer">
+    <h2 id="drawerTitle">Details</h2>
+
+    <div class="info-block">
+      <div class="level-row"><span>Entry (FVG mid):</span> <span id="entryDisplay">--</span></div>
+      <div class="level-row"><span>Stop Loss:</span> <span id="slDisplay">--</span></div>
+      <div class="level-row"><span>TP1 (1:2):</span> <span id="tp1Display">--</span></div>
+      <div class="level-row"><span>TP2 (1:3):</span> <span id="tp2Display">--</span></div>
+      <div class="level-row"><span>TP Structural:</span> <span id="tp3Display">--</span></div>
+    </div>
+
+    <div id="logicLog" class="info-block">
+      Select a coin to see full institution-style breakdown.
+    </div>
+  </div>
 
 </div>
-</div>
 
-        <script>
+<script>
+// ================== BINANCE API HELPERS ===================
+const API = "https://api.binance.com/api/v3";
+const sleep = (ms) => new Promise(r=>setTimeout(r,ms));
 
-/* ================================================================
-   CONFIG
-================================================================ */
-const BINANCE = "https://api.binance.com/api/v3";
-let isScanning = false;
+async function getCandles(symbol, interval){
+  try{
+    const r = await fetch(`${API}/klines?symbol=${symbol}&interval=${interval}&limit=300`);
+    const j = await r.json();
+    return j.map(k=>({
+      time:k[0],
+      open:+k[1],
+      high:+k[2],
+      low:+k[3],
+      close:+k[4]
+    }));
+  }catch(e){
+    console.error("Candle error",symbol,e);
+    return [];
+  }
+}
 
-/* HTF Mapping (Option A) */
-const HTF_MAP = {
-    "5m": "1h",
-    "15m": "4h",
-    "1h": "1d",
-    "4h": "1w"
-};
+async function getTopVolumePairs(){
+  try{
+    const r = await fetch(`${API}/ticker/24hr`);
+    const j = await r.json();
+    return j
+      .filter(x=>x.symbol.endsWith("USDT"))
+      .sort((a,b)=> (+b.quoteVolume) - (+a.quoteVolume))
+      .slice(0,50)
+      .map(x=>x.symbol);
+  }catch(e){
+    console.error("Top vol error",e);
+    return [];
+  }
+}
 
-/* ================================================================
-   MAIN SCANNER ENTRY
-================================================================ */
-async function runScanner() {
-    if (isScanning) return;
-    isScanning = true;
+// =============== CONTEXT: BEARISH LEG CHECK =================
+function isBearishContext(candles, endIndex){
+  const lookback = 40;
+  const start = Math.max(0, endIndex - lookback);
+  let downCount = 0;
+  let prevClose = candles[start].close;
+  let highTrendDown = 0;
+  for(let i=start+1;i<=endIndex;i++){
+    const cc = candles[i];
+    if(cc.close < prevClose) downCount++;
+    if(cc.high < candles[i-1].high) highTrendDown++;
+    prevClose = cc.close;
+  }
+  const len = endIndex - start;
+  if(len < 15) return false;
+  return (downCount/len > 0.55) && (highTrendDown/len > 0.5);
+}
 
-    const tf = document.getElementById("tfInput").value;
-    const btn = document.getElementById("scanBtn");
-    const bar = document.getElementById("progressBar");
-    const list = document.getElementById("resultsList");
-    const spinner = document.getElementById("spinner");
-
-    list.innerHTML = "";
-    btn.disabled = true;
-    btn.innerText = "Scanning...";
-    spinner.classList.remove("hidden");
-
-    const pairs = await getTopVolumePairs();
-    let combinedResults = [];
-
-    for (let i = 0; i < pairs.length; i++) {
-        const symbol = pairs[i];
-
-        // progress bar
-        const pct = ((i+1) / pairs.length) * 100;
-        bar.style.width = pct + "%";
-
-        await sleep(120);
-
-        try {
-            const candles = await getCandles(symbol, tf);
-            if (!candles.length) continue;
-
-            const htf = HTF_MAP[tf];
-            const htfCandles = await getCandles(symbol, htf);
-
-            // High timeframe bias
-            const bias = getHTFBias(htfCandles);
-
-            // ICT 2022 Model
-            const ict = detectICT2022(symbol, candles);
-
-            // Breaker block
-            const breaker = detectBreakerBlock(symbol, candles);
-
-            // BPR
-            const bpr = detectBPR(symbol, candles);
-
-            if (ict || breaker || bpr) {
-                const score = generateProbabilityScore({
-                    bias, ict, breaker, bpr
-                });
-
-                combinedResults.push({
-                    symbol,
-                    bias,
-                    ict,
-                    breaker,
-                    bpr,
-                    score
-                });
-            }
-
-        } catch(err) {
-            console.error("Error:", symbol, err);
-        }
+// =============== SUPPORT ZONE DETECTION =====================
+function findSupportZone(candles, upToIndex){
+  const lows = [];
+  for(let i = upToIndex-40; i<upToIndex; i++){
+    if(i<2) continue;
+    const c = candles[i];
+    if(c.low < candles[i-1].low && c.low < candles[i-2].low){
+      lows.push({index:i, price:c.low});
     }
+  }
+  if(lows.length < 2) return null;
+  lows.sort((a,b)=> a.price - b.price);
+  const base = lows[0].price;
+  const zoneHigh = base * 1.002; // tiny band above
+  const touches = lows.filter(l => l.price <= zoneHigh);
+  if(touches.length < 2) return null;
+  return {
+    level:(base + zoneHigh)/2,
+    touches
+  };
+}
 
-    renderList(combinedResults);
+// =============== STRONG LOW (SWEEP OF SUPPORT) ==============
+function detectStrongLow(candles, i, support){
+  const c = candles[i];
+  const body = Math.abs(c.close - c.open);
+  const lowerWick = c.open - c.low;
+  if(lowerWick < body * 2.5) return null;
+  if(!support) return null;
+  if(c.low >= support.level) return null;
+  return {
+    index:i,
+    price:c.low,
+    wickToBody: lowerWick / (body || 0.0001),
+    supportLevel: support.level,
+    supportTouches: support.touches
+  };
+}
 
+// =============== DISPLACEMENT + FVG =========================
+function detectDisplacementAndFVG(candles, startIndex){
+  for(let i=startIndex; i<startIndex+8 && i<candles.length-2; i++){
+    const mid = candles[i];
+    const prev = candles[i-1];
+    const next = candles[i+1];
+
+    const bull = mid.close > mid.open;
+    const gap = prev.high < next.low;
+    const bodySize = Math.abs(mid.close - mid.open);
+    const prevRange = prev.high - prev.low;
+    const nextRange = next.high - next.low;
+    const impulse = bodySize > (prevRange*0.7) && bodySize > (nextRange*0.7);
+
+    if(bull && gap && impulse){
+      return {
+        index:i,
+        fvgBottom: prev.high,
+        fvgTop: next.low,
+        impulseAggression: bodySize / ((mid.high-mid.low) || 0.0001)
+      };
+    }
+  }
+  return null;
+}
+
+// =============== SWING HIGH BEFORE SWEEP ====================
+function findPreSweepSwingHigh(candles, strongIndex){
+  let highest = -Infinity;
+  let highestIdx = -1;
+  for(let i=strongIndex-10; i<strongIndex; i++){
+    if(i<2) continue;
+    const c = candles[i];
+    if(c.high > candles[i-1].high && c.high > candles[i-2].high){
+      if(c.high > highest){
+        highest = c.high;
+        highestIdx = i;
+      }
+    }
+  }
+  if(highestIdx === -1) return null;
+  return { index:highestIdx, price:highest };
+}
+
+// =============== BOS CONFIRMATION ===========================
+function confirmBOS(candles, swingHigh){
+  if(!swingHigh) return null;
+  for(let i=swingHigh.index+1; i<candles.length; i++){
+    if(candles[i].high > swingHigh.price){
+      let ext = candles[i].high;
+      for(let j=i+1; j<candles.length; j++){
+        if(candles[j].high > ext) ext = candles[j].high;
+      }
+      return { internal: swingHigh.price, external: ext };
+    }
+  }
+  return null;
+}
+
+// =============== FVG RETURN (ENTRY CONDITION) ===============
+function inFVGNow(candles, fvg){
+  const last = candles[candles.length-1];
+  const price = last.close;
+  if(price < fvg.fvgBottom*0.995) return false;
+  if(price > fvg.fvgTop) return false;
+  return true;
+}
+
+// =============== TARGETS CALC ===============================
+function computeTargets(entry, sl, bos){
+  const risk = entry - sl;
+  return {
+    rr2: entry + risk*2,
+    rr3: entry + risk*3,
+    structure: bos ? bos.external*1.01 : entry + risk*4
+  };
+}
+
+// =============== MASTER TRAP DETECTOR =======================
+function detectBullishTrap(symbol, candles){
+  if(candles.length < 100) return null;
+  const c = candles.slice(-120);
+  for(let i=25; i<c.length-20; i++){
+    if(!isBearishContext(c, i)) continue;
+    const support = findSupportZone(c, i);
+    const strongLow = detectStrongLow(c, i, support);
+    if(!strongLow) continue;
+
+    const displacement = detectDisplacementAndFVG(c, i+1);
+    if(!displacement) continue;
+
+    const swingHigh = findPreSweepSwingHigh(c, i);
+    const bos = confirmBOS(c, swingHigh);
+    if(!bos) continue;
+
+    if(!inFVGNow(c, displacement)) continue;
+
+    const entry = (displacement.fvgTop + displacement.fvgBottom)/2;
+    const sl = strongLow.price;
+    const targets = computeTargets(entry, sl, bos);
+
+    return {
+      symbol,
+      entry,
+      sl,
+      targets,
+      strongLow,
+      displacement,
+      bos,
+      support,
+      contextBearish:true
+    };
+  }
+  return null;
+}
+
+// =============== UI LOGIC ===================================
+function renderList(results){
+  const list = document.getElementById("resultsList");
+  list.innerHTML = "";
+  results.forEach(res=>{
+    const el = document.createElement("div");
+    el.className = "coin-item";
+    el.innerHTML = `
+      <div class="coin-symbol">${res.symbol}</div>
+      <div><span class="tag-mini">Bullish Trap</span></div>
+    `;
+    el.onclick = ()=> showDetails(res, el);
+    list.appendChild(el);
+  });
+}
+
+function showDetails(res, el){
+  document.querySelectorAll(".coin-item").forEach(x=>x.classList.remove("active"));
+  el.classList.add("active");
+
+  document.getElementById("drawerTitle").innerText = res.symbol;
+  document.getElementById("entryDisplay").innerText = res.entry.toFixed(4);
+  document.getElementById("slDisplay").innerText = res.sl.toFixed(4);
+  document.getElementById("tp1Display").innerText = res.targets.rr2.toFixed(4);
+  document.getElementById("tp2Display").innerText = res.targets.rr3.toFixed(4);
+  document.getElementById("tp3Display").innerText = res.targets.structure.toFixed(4);
+
+  const s = res.strongLow;
+  const d = res.displacement;
+  const b = res.bos;
+  const sup = res.support;
+
+  const explanation =
+`BULLISH LIQUIDITY TRAP (STRICT)\n
+1. BEARISH CONTEXT
+   • Price in a local downtrend before trap (lower highs / lower closes).
+   • Simulates common retail bearish patterns (flags, triangles, channels).
+\n2. SUPPORT ZONE & STRONG LOW SWEEP
+   • Support zone from at least 2 swing lows ≈ ${sup ? sup.level.toFixed(4) : "n/a"}.
+   • Strong Low candle wicked through support:
+       - Strong Low: ${s.price.toFixed(4)}
+       - Wick/Body aggression: ${s.wickToBody.toFixed(2)}x
+   • This represents the fake breakdown / stop-hunt under support.
+\n3. BULLISH DISPLACEMENT + FVG
+   • In the next few candles, a strong bullish displacement formed an FVG:
+       - FVG Bottom: ${d.fvgBottom.toFixed(4)}
+       - FVG Top:    ${d.fvgTop.toFixed(4)}
+       - Impulse aggression: ${d.impulseAggression.toFixed(2)}
+   • This is smart money driving price away from the trap low.
+\n4. BREAK OF STRUCTURE (BOS)
+   • Structure high before sweep was broken:
+       - Internal BOS level: ${b.internal.toFixed(4)}
+       - External extension: ${b.external.toFixed(4)}
+   • Confirms market regime shift after raid.
+\n5. RETURN TO FVG (ENTRY)
+   • Current price has returned into the FVG zone.
+   • We use the FVG midpoint as entry for balanced RR:
+       - Entry (mid): ${res.entry.toFixed(4)}
+       - SL below strong low: ${res.sl.toFixed(4)}
+\n6. TARGETS (RR-BASED)
+   • TP1 (1:2 RR): ${res.targets.rr2.toFixed(4)}
+   • TP2 (1:3 RR): ${res.targets.rr3.toFixed(4)}
+   • TP Structural: ${res.targets.structure.toFixed(4)}
+\nThis is a full fake breakdown → displacement → BOS → return-to-imbalance trap model.
+`;
+
+  document.getElementById("logicLog").innerText = explanation;
+  document.getElementById("visualArea").innerText =
+    `Selected: ${res.symbol}\n\n` +
+    `Strong Low at ${s.price.toFixed(4)} swept prior support ~${sup ? sup.level.toFixed(4) : "n/a"}\n` +
+    `FVG: ${d.fvgBottom.toFixed(4)} → ${d.fvgTop.toFixed(4)}\n` +
+    `BOS above ${b.internal.toFixed(4)}, extension up to ${b.external.toFixed(4)}\n\n` +
+    `Price is now inside FVG → watching for reaction from entry zone.`;
+}
+
+// =============== SCANNER ====================================
+let scanning = false;
+
+async function runScanner(){
+  if(scanning) return;
+  scanning = true;
+
+  const tf = document.getElementById("tfInput").value;
+  const spinner = document.getElementById("spinner");
+  const status = document.getElementById("scanStatus");
+  const bar = document.getElementById("progressBar");
+  const list = document.getElementById("resultsList");
+
+  spinner.classList.remove("hidden");
+  status.innerText = "Fetching top-volume pairs...";
+  list.innerHTML = `<div style="padding:10px;color:var(--text-soft);text-align:center;">Scanning...</div>`;
+
+  const pairs = await getTopVolumePairs();
+  if(!pairs.length){
     spinner.classList.add("hidden");
-    btn.disabled = false;
-    btn.innerText = "Start Scan";
-    isScanning = false;
+    status.innerText = "Error: could not fetch Binance ticker data.";
+    scanning = false;
+    return;
+  }
 
-    setTimeout(()=> bar.style.width="0%", 800);
-}
+  const results = [];
+  status.innerText = `Scanning ${pairs.length} pairs on ${tf}...`;
 
-/* ================================================================
-   API FETCHERS
-================================================================ */
+  for(let i=0;i<pairs.length;i++){
+    const sym = pairs[i];
+    bar.style.width = ((i+1)/pairs.length)*100 + "%";
 
-async function getTopVolumePairs() {
-    try {
-        const r = await fetch(`${BINANCE}/ticker/24hr`);
-        const j = await r.json();
-        return j
-            .filter(d => d.symbol.endsWith("USDT"))
-            .sort((a,b)=> b.quoteVolume - a.quoteVolume)
-            .slice(0,50)
-            .map(x=>x.symbol);
-    } catch {
-        return [];
-    }
-}
-
-async function getCandles(symbol, interval) {
-    try {
-        const r = await fetch(`${BINANCE}/klines?symbol=${symbol}&interval=${interval}&limit=200`);
-        const j = await r.json();
-
-        return j.map(d => ({
-            time: d[0],
-            open: +d[1],
-            high: +d[2],
-            low: +d[3],
-            close: +d[4]
-        }));
-    } catch {
-        return [];
-    }
-}
-
-/* ================================================================
-   HTF BIAS ENGINE
-================================================================ */
-
-function getHTFBias(c) {
-    if (c.length < 20) return "neutral";
-
-    // HTF swing structure
-    let last = c.slice(-12);
-    let higherHigh = last[11].high > last[3].high;
-    let higherLow  = last[11].low > last[3].low;
-
-    if (higherHigh && higherLow) return "bullish";
-
-    return "neutral";
-}
-
-/* ================================================================
-   ICT 2022 MODEL DETECTOR
-================================================================ */
-function detectICT2022(symbol, c) {
-    if (c.length < 60) return null;
-
-    const recent = c.slice(-60);
-    const swings = getFractals(recent);
-
-    if (swings.lows.length < 2) return null;
-
-    for (let i = recent.length - 5; i >= 10; i--) {
-        let sweepCandle = recent[i];
-
-        for (let s = 0; s < swings.lows.length; s++) {
-            let low = swings.lows[s];
-
-            if (low.index < i - 3 && sweepCandle.low < low.price) {
-
-                // MSS
-                let interHigh = 0;
-                for (let k = low.index; k <= i; k++) {
-                    interHigh = Math.max(interHigh, recent[k].high);
-                }
-
-                let mssIndex = -1;
-                for (let m = i+1; m < recent.length; m++) {
-                    if (recent[m].close > interHigh) {
-                        mssIndex = m;
-                        break;
-                    }
-                }
-                if (mssIndex === -1) continue;
-
-                // FVG
-                const fvg = findBullishFVG(recent, i, mssIndex);
-                if (!fvg) continue;
-
-                const current = recent[recent.length-1].close;
-                if (current >= fvg.bottom * 0.995 && current <= fvg.top) {
-                    return {
-                        type: "ICT",
-                        symbol,
-                        sweep: low.price,
-                        mss: interHigh,
-                        fvg,
-                        entry: fvg.top,
-                        sl: sweepCandle.low,
-                        tp: interHigh * 1.02,
-                        explanation: `
-<b>ICT 2022 Model detected:</b><br><br>
-• Sell-side sweep at ${low.price}<br>
-• MSS above ${interHigh}<br>
-• Bullish FVG formed (${fvg.bottom} → ${fvg.top})<br>
-• Current price returned into imbalance<br>
-                        `
-                    };
-                }
-            }
-        }
-    }
-    return null;
-}
-
-/* ================================================================
-   BREAKER BLOCK DETECTOR (Bullish Only)
-================================================================ */
-function detectBreakerBlock(symbol, c) {
-    if (c.length < 50) return null;
-
-    const recent = c.slice(-50);
-
-    for (let i = 5; i < recent.length - 5; i++) {
-        let prevDown = recent[i-1];
-        let current = recent[i];
-
-        // breaker happens after failed bearish OB
-        if (prevDown.high < current.close && current.close > recent[i+1].high) {
-            return {
-                type: "Breaker",
-                symbol,
-                entry: current.open,
-                sl: Math.min(prevDown.low, current.low),
-                tp: current.high * 1.03,
-                explanation: `
-<b>Breaker Block:</b><br><br>
-• Previous bearish OB failed<br>
-• Strong displacement through OB high<br>
-• Bullish breaker identified<br>
-                `
-            };
-        }
+    const candles = await getCandles(sym, tf);
+    if(candles.length){
+      const trap = detectBullishTrap(sym, candles);
+      if(trap) results.push(trap);
     }
 
-    return null;
+    await sleep(120); // small delay to avoid hammering Binance
+  }
+
+  spinner.classList.add("hidden");
+  bar.style.width = "0%";
+  scanning = false;
+
+  status.innerText = `Scan complete: ${results.length} bullish trap setups found.`;
+
+  if(!results.length){
+    list.innerHTML = `<div style="padding:10px;color:var(--text-soft);text-align:center;">No strict-quality traps found. Try another timeframe.</div>`;
+  }else{
+    renderList(results);
+  }
 }
-
-/* ================================================================
-   BPR DETECTOR
-================================================================ */
-function detectBPR(symbol, c) {
-    if (c.length < 30) return null;
-
-    const recent = c.slice(-30);
-
-    for (let i = 2; i < recent.length - 2; i++) {
-        let c1 = recent[i-1];
-        let c2 = recent[i+1];
-
-        if (c1.high < c2.low) {
-            return {
-                type: "BPR",
-                symbol,
-                entry: c2.low,
-                sl: c1.low,
-                tp: c2.low * 1.03,
-                explanation: `
-<b>Balanced Price Range:</b><br><br>
-• Opposing FVGs align<br>
-• Market seeks balance<br>
-• Bullish BPR zone detected<br>
-                `
-            };
-        }
-    }
-
-    return null;
-}
-
-/* ================================================================
-   FRACTAL & FVG UTILS
-================================================================ */
-function getFractals(c) {
-    let lows = [];
-    for (let i=2; i<c.length-2; i++) {
-        if (c[i].low < c[i-1].low && c[i].low < c[i-2].low &&
-            c[i].low < c[i+1].low && c[i].low < c[i+2].low) {
-            lows.push({ index:i, price:c[i].low });
-        }
-    }
-    return { lows };
-}
-
-function findBullishFVG(c, start, end) {
-    for (let i = start+1; i < end; i++) {
-        let prev = c[i-1];
-        let next = c[i+1];
-
-        if (c[i].close > c[i].open && prev.high < next.low) {
-            return {
-                bottom: prev.high,
-                top: next.low
-            };
-        }
-    }
-    return null;
-}
-
-/* ================================================================
-   PROBABILITY ENGINE (Institutional)
-================================================================ */
-function generateProbabilityScore({ bias, ict, breaker, bpr }) {
-    let score = 0;
-
-    if (bias === "bullish") score += 35;
-    if (ict) score += 30;
-    if (breaker) score += 20;
-    if (bpr) score += 15;
-
-    if (score > 95) score = 95;
-    if (score < 10) score += 5;
-
-    return score;
-}
-
-/* ================================================================
-   RENDER LIST
-================================================================ */
-function renderList(results) {
-    const list = document.getElementById("resultsList");
-
-    if (!results.length) {
-        list.innerHTML = `
-        <div style="padding:20px; text-align:center;">
-        No setups found.
-        </div>`;
-        return;
-    }
-
-    list.innerHTML = "";
-
-    results.sort((a,b)=> b.score - a.score);
-
-    results.forEach(r => {
-        const el = document.createElement("div");
-        el.className = "coin-item";
-
-        const tags = [];
-        if (r.ict) tags.push(`<span class="tag-mini">ICT</span>`);
-        if (r.breaker) tags.push(`<span class="tag-mini">Breaker</span>`);
-        if (r.bpr) tags.push(`<span class="tag-mini">BPR</span>`);
-
-        el.innerHTML = `
-            <div class="coin-header">
-                <span>${r.symbol}</span>
-                <span>${r.score}%</span>
-            </div>
-            <div class="strategy-tags">${tags.join("")}</div>
-        `;
-
-        el.onclick = () => renderDetails(r);
-        list.appendChild(el);
-    });
-}
-
-/* ================================================================
-   RENDER FULL EXPLANATION PANEL
-================================================================ */
-function renderDetails(r) {
-    document.querySelectorAll(".coin-item").forEach(x=>x.classList.remove("selected"));
-    event.target.closest(".coin-item").classList.add("selected");
-
-    document.getElementById("emptyState").classList.add("hidden");
-    const view = document.getElementById("setupView");
-    view.classList.add("active");
-
-    document.getElementById("tickerDisplay").innerText = r.symbol;
-    document.getElementById("probDisplay").innerText = r.score + "%";
-
-    let entry = "--", sl = "--", tp="--", explanation="";
-    if (r.ict) {
-        entry = r.ict.entry;
-        sl = r.ict.sl;
-        tp = r.ict.tp;
-        explanation += r.ict.explanation + "<br>";
-    }
-    if (r.breaker) {
-        entry = r.breaker.entry;
-        sl = r.breaker.sl;
-        tp = r.breaker.tp;
-        explanation += r.breaker.explanation + "<br>";
-    }
-    if (r.bpr) {
-        entry = r.bpr.entry;
-        sl = r.bpr.sl;
-        tp = r.bpr.tp;
-        explanation += r.bpr.explanation + "<br>";
-    }
-
-    document.getElementById("entryDisplay").innerText = entry;
-    document.getElementById("slDisplay").innerText = sl;
-    document.getElementById("tpDisplay").innerText = tp;
-
-    if (r.bias === "bullish") {
-        explanation += `<br><b>HTF Bias:</b> Bullish (Directional Alignment Confirmed)`;
-    }
-
-    document.getElementById("logicLog").innerHTML = explanation;
-}
-
-/* ================================================================
-   UTILS
-================================================================ */
-function sleep(ms) {
-    return new Promise(r => setTimeout(r, ms));
-}
-
 </script>
 
-    </body>
-
+</body>
 </html>
